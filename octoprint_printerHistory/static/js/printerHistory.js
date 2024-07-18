@@ -1,29 +1,59 @@
-/*
- * View model for OctoPrint-Printerhistory
- *
- * Author: printerHistory
- * License: AGPLv3
- */
-$(function() {
-    function PrinterhistoryViewModel(parameters) {
+$(function () {
+    function PrinterHistoryViewModel(parameters) {
         var self = this;
 
-        // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
+        self.user = ko.observable("");
+        self.password = ko.observable("");
+        self.host = ko.observable("");
+        self.port = ko.observable("");
+        self.database = ko.observable("");
 
-        // TODO: Implement your plugin's view model here.
+        self.loadSettings = function () {
+            var settings = parameters[0];
+            if (
+                settings &&
+                settings.settings &&
+                settings.settings.plugins &&
+                settings.settings.plugins.printerhistory
+            ) {
+                var dbSettings =
+                    settings.settings.plugins.printerhistory.databaseSettings ||
+                    {};
+                self.user(dbSettings.user || "");
+                self.password(dbSettings.password || "");
+                self.host(dbSettings.host || "");
+                self.port(dbSettings.port || "");
+                self.database(dbSettings.database || "");
+            } else {
+                console.warn(
+                    "No se encontraron configuraciones de base de datos."
+                );
+            }
+        };
+
+        self.saveDatabaseSettings = function () {
+            var settings = {
+                user: self.user(),
+                password: self.password(),
+                host: self.host(),
+                port: self.port(),
+                database: self.database(),
+            };
+            OctoPrint.settings
+                .savePluginSettings("printerhistory", {
+                    databaseSettings: settings,
+                })
+                .done(function () {
+                    console.info("Configuraciones de base de datos guardadas.");
+                });
+        };
+
+        self.loadSettings();
     }
 
-    /* view model class, parameters for constructor, container to bind to
-     * Please see http://docs.octoprint.org/en/master/plugins/viewmodels.html#registering-custom-viewmodels for more details
-     * and a full list of the available options.
-     */
     OCTOPRINT_VIEWMODELS.push({
-        construct: PrinterhistoryViewModel,
-        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: [ /* "loginStateViewModel", "settingsViewModel" */ ],
-        // Elements to bind to, e.g. #settings_plugin_printerHistory, #tab_plugin_printerHistory, ...
-        elements: [ /* ... */ ]
+        construct: PrinterHistoryViewModel,
+        dependencies: ["settingsViewModel"],
+        elements: ["#printerhistory"],
     });
 });
