@@ -36,7 +36,7 @@ class ConfigManager:
             print(f"Error loading config: {e}")
             return {}
 
-    def save_config(self, config):
+    def save_config(self, config):  #OK
         with open(self.config_file, 'w') as f:
             json.dump(config, f, indent=4)
         self.config = config
