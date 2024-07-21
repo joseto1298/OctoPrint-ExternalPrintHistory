@@ -36,9 +36,11 @@ class PrinterhistoryPlugin(
         self._logger.info("Shutting down Printerhistory plugin")
     
     def get_settings_defaults(self):
+        self._logger.info("get_settings_defaults")
         return self.load_config()
         
     def on_settings_load(self):
+        self._logger.info("on_settings_load")
         return self.load_config()
     
     def on_settings_save(self, data):
@@ -47,7 +49,7 @@ class PrinterhistoryPlugin(
         self.config = data
 
     def load_config(self):
-        self._logger.info("Load config")
+        #self._logger.info("Load config")
         try:
             if not os.path.exists(self.config_folder):
                 os.makedirs(self.config_folder)
@@ -67,9 +69,7 @@ class PrinterhistoryPlugin(
                 return default_config
 
             with open(self.config_file, 'r') as f:
-                self._logger.info("Load config 2")
                 config = json.load(f)
-                self._logger.info("Loaded configuration: %s", config)
                 return config
 
         except Exception as e:
@@ -77,10 +77,11 @@ class PrinterhistoryPlugin(
             return {}
 
     def save_config(self, config):
+        self._logger.info(" saved ", config)
         try:
             with open(self.config_file, 'w') as f:
                 json.dump(config, f, indent=4)
-                self._logger.info("Configuration saved successfully.")
+                self._logger.info("Configuration saved successfully.", config)
         except Exception as e:
             self._logger.error(f"Error saving config: {e}")
 
