@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 
-import json
 import os
+import json
 import logging
 import octoprint.plugin
 from .eventHandler import Event
+from .configManager import ConfigManager
 
 class PrinterhistoryPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -17,74 +18,61 @@ class PrinterhistoryPlugin(
     
     def __init__(self):
         self._logger = logging.getLogger(__name__)
-        self.config_folder = None
-        self.config_file = None
-        self.config = None
         self.event_handler = None
-    
-    def initialize(self):
-        self.config_folder = self.get_plugin_data_folder()
-        self.config_file = os.path.join(self.config_folder, "config.json")
-        self.config = self.load_config()
-        self.event_handler = Event(db=None, logger=self._logger)
-        
+        self.config_Manager = None
+       
     def on_startup(self, host, port):
-        self.event_handler = Event(db=None, logger=self._logger) 
-        self._logger.info("Printerhistory Plugin started with configuration: {}".format(self.config))
-
+        self._logger.info("Printerhistory Plugin started with configuration")
+        self.event_handler = Event(db=None, logger=self._logger)
+        self.config_Manager = ConfigManager(logger=self._logger)
+                
     def on_shutdown(self):
         self._logger.info("Shutting down Printerhistory plugin")
     
     def get_settings_defaults(self):
-        self._logger.info("get_settings_defaults")
-        return self.load_config()
-        
+        return self.modify_config()
+
     def on_settings_load(self):
-        self._logger.info("on_settings_load")
-        return self.load_config()
+        return self.modify_config()
     
     def on_settings_save(self, data):
-        self._logger.info("Saving settings...")
-        self.save_config(data)
-        self.config = data
+        return self.modify_config(data=data)
 
-    def load_config(self):
-        #self._logger.info("Load config")
+    def modify_config(self, data=None):
+        self.config_folder = self.get_plugin_data_folder()
+        self.config_file = os.path.join(self.config_folder, "config.json")
+
         try:
             if not os.path.exists(self.config_folder):
                 os.makedirs(self.config_folder)
 
             if not os.path.exists(self.config_file):
-                default_config = [{
-                    "database": {
-                        "user": "",
-                        "password": "",
-                        "host": "",
-                        "port": 0,
-                        "database": ""
-                    }
-                }]
-                self.save_config(default_config)
-                self._logger.info("Create default_config")
+                default_config = {
+                    "db_user": "user", 
+                    "db_password": "password", 
+                    "db_host": "host", 
+                    "db_port": "3306", 
+                    "db_database": "database"
+                }
+                with open(self.config_file, 'w') as f:
+                    json.dump(default_config, f, indent=4)
                 return default_config
-
+            
             with open(self.config_file, 'r') as f:
                 config = json.load(f)
-                return config
+
+            if data:
+                combined_data = {**config, **data}
+                with open(self.config_file, 'w') as f:
+                    json.dump(combined_data, f, indent=4)
+                return {}
+
+            return config
 
         except Exception as e:
-            self._logger.error(f"Error loading config: {e}")
+            self.logger.error(f"Error loading config: {e}")
             return {}
-
-    def save_config(self, config):
-        self._logger.info(" saved ", config)
-        try:
-            with open(self.config_file, 'w') as f:
-                json.dump(config, f, indent=4)
-                self._logger.info("Configuration saved successfully.", config)
-        except Exception as e:
-            self._logger.error(f"Error saving config: {e}")
-
+        
     def on_event(self, event, payload):
         if self.event_handler:
             self.event_handler.handle_event(event, payload)
