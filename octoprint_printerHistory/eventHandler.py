@@ -1,15 +1,16 @@
-# coding=utf-8
-# eventHandler.py
-
+import base64
+import os
 from octoprint.events import Events
+from .printerHistory import Print
 
-class Event:
-    def __init__(self, db, logger):
+class EventHandler :
+    def __init__(self, plugin, logger):
         self.logger = logger
-        self.db = db
+        self.plugin = plugin
+        self.print = Print(plugin=self, logger=logger)              
 
     def handle_event(self, event, payload):
-        
+    
         self.logger.info(f"Handling event: {event} {payload}")
 
         if event == Events.PRINT_STARTED:
@@ -25,68 +26,81 @@ class Event:
             self._handle_metadata_statistics_updated(payload)
 
         # unsupported event
-        else:
-            self.logger.info(f"Unsupported event: {event}")
+        #else:
+            #self.logger.info(f"Unsupported event: {event}")
 
     def _handle_print_started(self, payload):
         self.logger.info("Print started: %s", payload)
-        #self.db.execute_query("""
-        #    INSERT INTO print_history 
-        #    (order_id, printer_id, filament_id, start_datetime, state) 
-        #    VALUES (%s, %s, %s, %s, %s)""",
-        #    (payload.get("order_id"), payload.get("printer_id"), payload.get("filament_id"), payload["time"], "started"))
+        self.logger.info(f"thumbnail: {self._extract_print_parameters(payload)}")
+
 
     def _handle_print_done(self, payload):
         self.logger.info("Print done: %s", payload)
-        #self.db.execute_query("""
-        #    UPDATE print_history 
-        #    SET end_datetime = %s, duration = %s, state = %s 
-        #    WHERE print_id = %s""",
-        #    (payload["time"], self._calculate_duration(payload["time"], payload["file"]), "done", self._get_print_id(payload["file"])))
-
+       
     def _handle_print_failed(self, payload):
         self.logger.info("Print failed: %s", payload)
-        #self.db.execute_query("""
-        #    UPDATE print_history 
-        #    SET end_datetime = %s, state = %s 
-        #    WHERE print_id = %s""",
-        #    (payload["time"], "failed", self._get_print_id(payload["file"])))
-
+      
     def _handle_metadata_statistics_updated(self, payload):
         self.logger.info("Metadata statistics updated: %s", payload)
         #self._update_metadata(payload)
 
-    def _update_metadata(self, payload):
-        print_id = self._get_print_id(payload["file"])
-        #if print_id is not None:
-        #    self.db.execute_query("""
-        #        UPDATE print_history 
-        #        SET estimated_time = %s, calculated_length = %s, total_length = %s, 
-        #            calculated_height = %s, total_height = %s, calculated_layers = %s, 
-        #            total_layers = %s, calculated_weight = %s, total_weight = %s, 
-        #            nozzle_temperature = %s, bed_temperature = %s, bed_type = %s, 
-        #            nozzle_diameter = %s
-        #        WHERE print_id = %s""",
-        #        (payload.get("estimated_time"), payload.get("calculated_length"), payload.get("total_length"),
-        #        payload.get("calculated_height"), payload.get("total_height"), payload.get("calculated_layers"),
-        #        payload.get("total_layers"), payload.get("calculated_weight"), payload.get("total_weight"),
-        #        payload.get("nozzle_temperature"), payload.get("bed_temperature"), payload.get("bed_type"),
-        #        payload.get("nozzle_diameter"), print_id))
+    def _extract_print_parameters(self, payload):
+        """
+        Extracts parameters of the print from the event payload.
+        """
+        return {
+            "file_name": payload.get("name", "N/A"),
+            "file_path": payload.get("path", "N/A"),
+            "start_time": payload.get("time", "N/A"),  # Unix timestamp
+            "material_used": payload.get("material", "N/A"),  # Requires further processing
+            "print_time": payload.get("printTime", "N/A"),  # Total print time
+            "printer_state": payload.get("state", "N/A"),
+            "thumbnail": self._get_thumbnail(payload.get("path"))  # Extract thumbnail
+        }
 
-    def _calculate_duration(self, end_time, file):
-        start_time = self._get_start_time(file)
-        if start_time:
-            return int(end_time) - int(start_time)
-        return 0
+    def _get_thumbnail(self, file_path):
+        """
+        Gets the thumbnail path for the given gcode file from the slicer thumbnails plugin
+        and encodes it to base64 for storage in the database.
+        """
+        # Remove the .gcode extension
+        base_name = os.path.splitext(file_path)[0]
 
-    def _get_start_time(self, file):
-        #cursor = self.db.execute_query("SELECT start_datetime FROM print_history WHERE file = %s ORDER BY start_datetime DESC LIMIT 1", (file,))
-        #result = cursor.fetchone()
-        #return result[0] if result else None
-        return None
-    
-    def _get_print_id(self, file):
-        #cursor = self.db.execute_query("SELECT print_id FROM print_history WHERE file = %s ORDER BY start_datetime DESC LIMIT 1", (file,))
-        #result = cursor.fetchone()
-        #return result[0] if result else None
-        return None
+        """
+
+        # Get the data folder of the slicerthumbnails plugin
+        slicer_thumbnails_data_folder = self._get_other_plugin_data_folder("slicerthumbnails")
+        
+        if not slicer_thumbnails_data_folder:
+            self.logger.error("Could not retrieve Slicer Thumbnails data folder.")
+            return None
+
+
+        # Construct the expected thumbnail path
+        thumbnail_path = os.path.join(slicer_thumbnails_data_folder, base_name + ".png")
+        
+        # Check if the thumbnail exists and encode it
+        if os.path.exists(thumbnail_path):
+            self.logger.info(f"Thumbnail found: {thumbnail_path}")
+            try:
+                with open(thumbnail_path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                return encoded_string
+            except IOError as e:
+                self.logger.error(f"Error reading thumbnail file {thumbnail_path}: {e}")
+                return None
+        else:
+            self.logger.error(f"Thumbnail not found for {file_path} at {thumbnail_path}")
+            return None
+        """
+
+    def _get_other_plugin_data_folder(self, plugin_identifier):
+        """
+        Retrieves the data folder path for another plugin by its identifier.
+        """
+        plugin_instance = self.plugin._plugin_manager.get_plugin(plugin_identifier)
+        if plugin_instance:
+            return plugin_instance.get_plugin_data_folder()
+        else:
+            self.logger.error(f"Plugin '{plugin_identifier}' not found.")
+            return None

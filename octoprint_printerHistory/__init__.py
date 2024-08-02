@@ -1,11 +1,9 @@
 from __future__ import absolute_import
-
-import os
-import json
 import logging
 import octoprint.plugin
-from .eventHandler import Event
-from .configManager import ConfigManager
+from .eventHandler import EventHandler
+from .databaseManager import DatabaseManager
+from .configurationManager import ConfigurationManager
 
 class PrinterhistoryPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -13,82 +11,77 @@ class PrinterhistoryPlugin(
     octoprint.plugin.TemplatePlugin,
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
-    octoprint.plugin.SimpleApiPlugin
+    octoprint.plugin.SimpleApiPlugin,
+    octoprint.plugin.BlueprintPlugin
 ):
-    
     def __init__(self):
-        self._logger = logging.getLogger(__name__)
-        self.event_handler = None
-        self.config_Manager = None
-       
+        self._logger = logging.getLogger("octoprint.plugins.printerhistory")
+        self.event_handler = EventHandler(plugin=self, logger=self._logger)
+        self.database_manager = DatabaseManager(plugin=self, logger=self._logger)
+        self.config_manager = ConfigurationManager(plugin=self, logger=self._logger)
+        self.printer_id = None
+
     def on_startup(self, host, port):
-        self._logger.info("Printerhistory Plugin started with configuration")
-        self.event_handler = Event(db=None, logger=self._logger)
-        self.config_Manager = ConfigManager(logger=self._logger)
-                
+        self._logger.info("PrinterHistory Plugin started with configuration")
+        self.database_manager._set_connection_settings(self.config_manager._load_existing_config())
+
     def on_shutdown(self):
-        self._logger.info("Shutting down Printerhistory plugin")
-    
+        self._logger.info("Shutting down PrinterHistory plugin")
+
     def get_settings_defaults(self):
-        return self.modify_config()
+        """Returns the default settings for the plugin."""
+        return self.config_manager._initialize_config_files()
 
     def on_settings_load(self):
-        return self.modify_config()
+        """Called when the settings are loaded."""
+        settings_data = self.config_manager._load_existing_config()
+        self.printer_id = settings_data.get("printer_id")
+        return settings_data
     
     def on_settings_save(self, data):
-        return self.modify_config(data=data)
+        """Called when the settings are saved."""
+        current_settings = self.config_manager._load_existing_config()
+        updated_settings = current_settings.copy()
+        updated_settings.update(data)
 
-    def modify_config(self, data=None):
-        self.config_folder = self.get_plugin_data_folder()
-        self.config_file = os.path.join(self.config_folder, "config.json")
+        db_changes = self.config_manager._process_database_changes(data, current_settings)
+        printer_changes = self.config_manager._process_printer_changes(data, current_settings)
 
-        try:
-            if not os.path.exists(self.config_folder):
-                os.makedirs(self.config_folder)
-
-            if not os.path.exists(self.config_file):
-                default_config = {
-                    "db_user": "user", 
-                    "db_password": "password", 
-                    "db_host": "host", 
-                    "db_port": "3306", 
-                    "db_database": "database"
-                }
-                with open(self.config_file, 'w') as f:
-                    json.dump(default_config, f, indent=4)
-                return default_config
-            
-            with open(self.config_file, 'r') as f:
-                config = json.load(f)
-
-            if data:
-                combined_data = {**config, **data}
-                with open(self.config_file, 'w') as f:
-                    json.dump(combined_data, f, indent=4)
-                return {}
-
-            return config
-
-        except Exception as e:
-            self.logger.error(f"Error loading config: {e}")
-            return {}
+        if db_changes:
+            self.database_manager._set_connection_settings(updated_settings)
+        if printer_changes:
+            self.printer_id = self.database_manager._update_insert_printer_config(updated_settings)
+            updated_settings["printer_id"] = self.printer_id
         
+        if db_changes or printer_changes:
+            self.config_manager._update_config(updated_settings)
+
     def on_event(self, event, payload):
-        if self.event_handler:
-            self.event_handler.handle_event(event, payload)
+        """Handles events triggered by OctoPrint."""
+        self._logger.info(f"Handling event: {event} {payload}")
+        self.event_handler.handle_event(event, payload)
 
     def get_template_configs(self):
+        """
+        Returns the template configurations.
+        """
         return [
             dict(type="settings", name="Printer History", custom_bindings=True, template="PrinterhistoryPlugin_settings.jinja2")
         ]
 
     def get_assets(self):
+        """
+        Returns the assets (JS and CSS) required by the plugin.
+        """
         return {
             "js": ["js/printerHistory.js"],
             "css": ["css/printerHistory.css"]
         }
 
     def get_update_information(self):
+        """
+        Returns update information for the plugin.
+        """
         return {
             "printerHistory": {
                 "displayName": "Printerhistory Plugin",
