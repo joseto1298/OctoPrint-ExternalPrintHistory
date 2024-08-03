@@ -77,7 +77,7 @@ class ConfigurationManager:
             self.logger.info("Configuration updated successfully.")
         except Exception as e:
             self.logger.error(f"Failed to save configuration: {e}")
-
+    
     def _process_database_changes(self, data, current_config):
         """
         Processes changes in database configuration and determines if updates are needed.

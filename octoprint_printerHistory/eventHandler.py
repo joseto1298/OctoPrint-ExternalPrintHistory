@@ -11,7 +11,7 @@ class EventHandler :
 
     def handle_event(self, event, payload):
     
-        self.logger.info(f"Handling event: {event} {payload}")
+        #self.logger.info(f"Handling event: {event} {payload}")
 
         if event == Events.PRINT_STARTED:
             self._handle_print_started(payload)
@@ -30,8 +30,17 @@ class EventHandler :
             #self.logger.info(f"Unsupported event: {event}")
 
     def _handle_print_started(self, payload):
-        self.logger.info("Print started: %s", payload)
-        self.logger.info(f"thumbnail: {self._extract_print_parameters(payload)}")
+        self.logger.info("Print started")
+        metadata = self.get_metadata(payload)
+        self.logger.info(f"metadata: {metadata}")
+        self.logger.info(f"metadata: {payload}")
+
+        thumbnail_path = self._takeThumbnailImage(metadata)
+
+        #thumbnail_path
+        #print_id 
+        #order_id
+        #printer_id
 
 
     def _handle_print_done(self, payload):
@@ -44,6 +53,10 @@ class EventHandler :
         self.logger.info("Metadata statistics updated: %s", payload)
         #self._update_metadata(payload)
 
+
+    def get_metadata(self, payload):
+        return self.plugin._file_manager.get_metadata(payload["origin"], payload["path"])
+
     def _extract_print_parameters(self, payload):
         """
         Extracts parameters of the print from the event payload.
@@ -55,44 +68,18 @@ class EventHandler :
             "material_used": payload.get("material", "N/A"),  # Requires further processing
             "print_time": payload.get("printTime", "N/A"),  # Total print time
             "printer_state": payload.get("state", "N/A"),
-            "thumbnail": self._get_thumbnail(payload.get("path"))  # Extract thumbnail
+            #"thumbnail": self._takeThumbnailImage(payload.get("path"))  # Extract thumbnail
         }
-
-    def _get_thumbnail(self, file_path):
-        """
-        Gets the thumbnail path for the given gcode file from the slicer thumbnails plugin
-        and encodes it to base64 for storage in the database.
-        """
-        # Remove the .gcode extension
-        base_name = os.path.splitext(file_path)[0]
-
-        """
-
-        # Get the data folder of the slicerthumbnails plugin
-        slicer_thumbnails_data_folder = self._get_other_plugin_data_folder("slicerthumbnails")
-        
-        if not slicer_thumbnails_data_folder:
-            self.logger.error("Could not retrieve Slicer Thumbnails data folder.")
-            return None
-
-
-        # Construct the expected thumbnail path
-        thumbnail_path = os.path.join(slicer_thumbnails_data_folder, base_name + ".png")
-        
-        # Check if the thumbnail exists and encode it
-        if os.path.exists(thumbnail_path):
-            self.logger.info(f"Thumbnail found: {thumbnail_path}")
-            try:
-                with open(thumbnail_path, "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                return encoded_string
-            except IOError as e:
-                self.logger.error(f"Error reading thumbnail file {thumbnail_path}: {e}")
-                return None
+    
+    def _takeThumbnailImage(self, metadata):        
+        if ("thumbnail" in metadata):
+            thumbnail_path = metadata.get("thumbnail")
+            if '?' in thumbnail_path:
+                    thumbnail_path = thumbnail_path.split('?')[0]
+                    return thumbnail_path
         else:
-            self.logger.error(f"Thumbnail not found for {file_path} at {thumbnail_path}")
-            return None
-        """
+            self.logger.error("Thumbnail not found in print metadata")
+        
 
     def _get_other_plugin_data_folder(self, plugin_identifier):
         """

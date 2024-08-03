@@ -13,14 +13,35 @@ class DatabaseManager:
         Sets the database connection settings.
         """
         db_config = {
-            'host': config.get('db_host'),
-            'user': config.get('db_user'),
-            'password': config.get('db_password'),
-            'database': config.get('db_database'),
-            'port': int(config.get('db_port', 3306))
-            }
+        'host': config.get('db_host'),
+        'user': config.get('db_user'),
+        'password': config.get('db_password'),
+        'database': config.get('db_database'),
+        'port': int(config.get('db_port', 3306))
+        }
         
         self.connection_settings = db_config
+        
+    def _test_connection(self, config):
+        """
+        Tests the database connection.
+        """
+        db_config = {
+        'host': config.get('db_host'),
+        'user': config.get('db_user'),
+        'password': config.get('db_password'),
+        'database': config.get('db_database'),
+        'port': int(config.get('db_port', 3306))
+        }
+    
+        try:
+            connection = pymysql.connect(**db_config)
+            connection.close()
+            self.logger.info("Successfully connected to the database.")
+            return {"status": "success", "message": "Connection successful"}
+        except Error as e:
+            self.logger.error(f"Error connecting to MySQL database: {e}")
+            return {"status": "error", "message": str(e)}
 
     def get_connection(self):
         """
@@ -28,7 +49,7 @@ class DatabaseManager:
         """
         if not self.connection_settings:
             self.logger.error("Database configuration is not set.")
-            return None
+            return {"status": "error", "message": str(e)}
         try:
             if self.connection is None or not self.connection.open:
                 self.connection = pymysql.connect(**self.connection_settings)
@@ -36,7 +57,7 @@ class DatabaseManager:
             return self.connection
         except Error as e:
             self.logger.error(f"Error connecting to MySQL database: {e}")
-            return None
+            return {"status": "error", "message": str(e)}
 
     def close_connection(self):
         """
@@ -78,9 +99,9 @@ class DatabaseManager:
             except Error as e:
                 self.logger.error(f"Error executing query: {e}")
                 connection.rollback()
-                return None
+                return {"status": "error", "message": str(e)}
         else:
-            return None
+            return {"status": "error", "message": "No connection"}
             
     def _update_insert_printer_config(self, printer_data):        
         """
@@ -130,7 +151,10 @@ class DatabaseManager:
             except Error as e:
                 self.logger.error(f"Error executing query: {e}")
                 connection.rollback()
+                return {"status": "error", "message": str(e)}
             finally:
                 self.logger.info(f"Returning printer_id: {printer_id}")
                 self.close_connection()
-                return printer_id
+                return {"id": printer_id}
+        else:
+            return {"status": "error", "message": "No connection"}

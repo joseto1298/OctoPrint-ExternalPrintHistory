@@ -5,7 +5,7 @@
     <div class="control-group">
         <label class="control-label">{{ _('User') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_user">
+            <input type="text" id="db_user" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_user">
         </div>
     </div>
 
@@ -19,61 +19,72 @@
     <div class="control-group">
         <label class="control-label">{{ _('Host') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_host">
+            <input type="text" id="db_host" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_host">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Port') }}</label>
         <div class="controls">
-            <input type="number" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_port">
+            <input type="number" id="db_port" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_port">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Database') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_database">
+            <input type="text" id="db_database" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_database">
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <div class="controls">
+            <button id="test_connection" class="btn btn-primary">{{ _('Test Connection') }}</button>
         </div>
     </div>
 
-<br>
+    <div class="control-group">
+        <div class="controls">
+            <span id="connection_status" data-bind="text: connectionStatus"></span>
+        </div>
+    </div>
 
-<h3>Printer Settings</h3>
+    <br>
 
-  <div class="control-group">
+    <h3>Printer Settings</h3>
+
+    <div class="control-group">
         <label class="control-label">{{ _('ID') }}</label>
         <div class="controls">
-            <input type="text" readonly data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_id">
+            <input type="text" readonly id="printer_id" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_id">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Name') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_name">
+            <input type="text" id="printer_name" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_name">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Model') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_model">
+            <input type="text" id="printer_model" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_model">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Brand') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_brand">
+            <input type="text" id="printer_brand" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_brand">
         </div>
     </div>
 
     <div class="control-group">
         <label class="control-label">{{ _('Power consumption Watts (W)') }}</label>
         <div class="controls">
-            <input type="text" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_power_consumption">
+            <input type="text" id="printer_power_consumption" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_power_consumption">
         </div>
     </div>
-
 </form>

@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 import logging
+import flask
 import octoprint.plugin
 from .eventHandler import EventHandler
 from .databaseManager import DatabaseManager
 from .configurationManager import ConfigurationManager
+from flask import jsonify, request, make_response, Response, send_file
+
 
 class PrinterhistoryPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -20,10 +23,13 @@ class PrinterhistoryPlugin(
         self.database_manager = DatabaseManager(plugin=self, logger=self._logger)
         self.config_manager = ConfigurationManager(plugin=self, logger=self._logger)
         self.printer_id = None
+        self.print_id = None
+        self.config_settings = None
 
     def on_startup(self, host, port):
         self._logger.info("PrinterHistory Plugin started with configuration")
-        self.database_manager._set_connection_settings(self.config_manager._load_existing_config())
+        self.config_settings = self.config_manager._load_existing_config()
+        self.database_manager._set_connection_settings(self.config_settings)
 
     def on_shutdown(self):
         self._logger.info("Shutting down PrinterHistory plugin")
@@ -34,31 +40,33 @@ class PrinterhistoryPlugin(
 
     def on_settings_load(self):
         """Called when the settings are loaded."""
-        settings_data = self.config_manager._load_existing_config()
-        self.printer_id = settings_data.get("printer_id")
-        return settings_data
+        self.printer_id = self.config_settings.get("printer_id")
+        return self.config_settings
     
     def on_settings_save(self, data):
         """Called when the settings are saved."""
-        current_settings = self.config_manager._load_existing_config()
-        updated_settings = current_settings.copy()
+                
+        updated_settings = self.config_settings.copy()
         updated_settings.update(data)
-
-        db_changes = self.config_manager._process_database_changes(data, current_settings)
-        printer_changes = self.config_manager._process_printer_changes(data, current_settings)
-
-        if db_changes:
-            self.database_manager._set_connection_settings(updated_settings)
-        if printer_changes:
-            self.printer_id = self.database_manager._update_insert_printer_config(updated_settings)
-            updated_settings["printer_id"] = self.printer_id
         
-        if db_changes or printer_changes:
-            self.config_manager._update_config(updated_settings)
+        self.database_manager._set_connection_settings(updated_settings)
+        
+        self.printer_id = self.database_manager._update_insert_printer_config(updated_settings)
+        updated_settings["printer_id"] = self.printer_id
+        
+        self.config_manager._update_config(updated_settings)
+        self.config_settings = updated_settings
+
+    @octoprint.plugin.BlueprintPlugin.route("/testdbconnection", methods=["PUT"])
+    def test_db_connection(self):
+        data = request.json
+        self._logger.info(f"/testdbconnection: {request.json}")
+        result = self.database_manager._test_connection(data)
+        return flask.jsonify(result)
 
     def on_event(self, event, payload):
         """Handles events triggered by OctoPrint."""
-        self._logger.info(f"Handling event: {event} {payload}")
+        #self._logger.info(f"Handling event: {event} {payload}")
         self.event_handler.handle_event(event, payload)
 
     def get_template_configs(self):
