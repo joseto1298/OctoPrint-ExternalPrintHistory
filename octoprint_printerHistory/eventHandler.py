@@ -32,10 +32,13 @@ class EventHandler :
     def _handle_print_started(self, payload):
         self.logger.info("Print started")
         metadata = self.get_metadata(payload)
+
         self.logger.info(f"metadata: {metadata}")
-        self.logger.info(f"metadata: {payload}")
+        self.logger.info(f"payload: {payload}")
 
         thumbnail_path = self._takeThumbnailImage(metadata)
+        
+        self.logger.info(f"thumbnail_path: {thumbnail_path}")
 
         #thumbnail_path
         #print_id 
@@ -72,14 +75,9 @@ class EventHandler :
         }
     
     def _takeThumbnailImage(self, metadata):        
-        if ("thumbnail" in metadata):
-            thumbnail_path = metadata.get("thumbnail")
-            if '?' in thumbnail_path:
-                    thumbnail_path = thumbnail_path.split('?')[0]
-                    return thumbnail_path
-        else:
-            self.logger.error("Thumbnail not found in print metadata")
-        
+            thumbnail_path = thumbnail_path.split('?')[0]
+            return thumbnail_path
+    
 
     def _get_other_plugin_data_folder(self, plugin_identifier):
         """

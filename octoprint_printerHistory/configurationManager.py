@@ -25,14 +25,14 @@ class ConfigurationManager:
         if not os.path.exists(self.config_folder_path):
             os.makedirs(self.config_folder_path)
         if not os.path.exists(self.config_file_path):
-            default_config = self._get_default_config()
+            default_config = self.get_default_config()
             try:
                 with open(self.config_file_path, 'w') as f:
                     json.dump(default_config, f, indent=4)
             except Exception as e:
                 self.logger.error(f"Error creating configuration file: {e}")
 
-    def _get_default_config(self):
+    def get_default_config(self):
         """
         Returns the default configuration values.
         """
@@ -43,10 +43,7 @@ class ConfigurationManager:
             "db_port": "3306",
             "db_database": "database",
             "printer_id": 0,
-            "printer_name": "name",
-            "printer_model": "model",
-            "printer_brand": "brand",
-            "printer_power_consumption": 0.00,
+            "print_id": 0,
         }
 
     def _initialize_config_files(self):
@@ -71,32 +68,15 @@ class ConfigurationManager:
         """
         Updates the configuration with new data.
         """
+        updated_settings = self._load_existing_config()
+        updated_settings.update(data)
+
         try:
             with open(self.config_file_path, 'w') as f:
-                json.dump(data, f, indent=4)
+                json.dump(updated_settings, f, indent=4)
             self.logger.info("Configuration updated successfully.")
         except Exception as e:
             self.logger.error(f"Failed to save configuration: {e}")
-    
-    def _process_database_changes(self, data, current_config):
-        """
-        Processes changes in database configuration and determines if updates are needed.
-        """
-        db_keys = ['db_user', 'db_password', 'db_host', 'db_port', 'db_database']
-        updates = {key: data.get(key, current_config.get(key)) for key in db_keys}
-        changes = {key: value for key, value in updates.items() if value != current_config.get(key)}
-
-        return bool(changes)
-
-    def _process_printer_changes(self, data, current_config):
-        """
-        Processes changes in printer configuration and determines if updates are needed.
-        """
-        printer_keys = ['printer_id', 'printer_name', 'printer_model', 'printer_brand', 'printer_power_consumption']
-        updates = {key: data.get(key, current_config.get(key)) for key in printer_keys}
-        changes = {key: value for key, value in updates.items() if value != current_config.get(key)}
-
-        return bool(changes)
 
     def _initialize_key_and_salt(self):
         """

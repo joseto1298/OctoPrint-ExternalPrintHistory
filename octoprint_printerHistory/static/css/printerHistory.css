@@ -1,1 +1,22 @@
-/* TODO: Have your plugin's CSS files generated to here. */
+/* Ocultar las flechas en navegadores basados en Webkit (Chrome, Safari, Edge) */
+#printer_power_consumption::-webkit-inner-spin-button,
+#printer_power_consumption::-webkit-outer-spin-button,
+#db_port::-webkit-inner-spin-button,
+#db_port::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Ocultar las flechas en Firefox */
+#printer_power_consumption,
+#db_port {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Asegurarse de que las flechas no aparezcan en los navegadores más antiguos */
+#printer_power_consumption,
+#db_port {
+  appearance: textfield;
+}

@@ -1,90 +1,114 @@
 <h2>Printer History Settings</h2>
-<h3>Database Settings</h3>
+<h4>*Changes are made using the Save Changes Buttons</h4>
 
 <form class="form-vertical" id="printerhistory">
-    <div class="control-group">
-        <label class="control-label">{{ _('User') }}</label>
-        <div class="controls">
-            <input type="text" id="db_user" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_user">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Password') }}</label>
-        <div class="controls">
-            <input type="password" id="db_password" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_password">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Host') }}</label>
-        <div class="controls">
-            <input type="text" id="db_host" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_host">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Port') }}</label>
-        <div class="controls">
-            <input type="number" id="db_port" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_port">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Database') }}</label>
-        <div class="controls">
-            <input type="text" id="db_database" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_database">
-        </div>
-    </div>
     
-    <div class="control-group">
-        <div class="controls">
-            <button id="test_connection" class="btn btn-primary">{{ _('Test Connection') }}</button>
-        </div>
-    </div>
+    <div class="group1">
 
-    <div class="control-group">
-        <div class="controls">
-            <span id="connection_status" data-bind="text: connectionStatus"></span>
+        <h3>Database Settings</h3>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('User') }}</label>
+            <div class="controls">
+                <input type="text" id="db_user" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_user">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Password') }}</label>
+            <div class="controls">
+                <input type="password" id="db_password" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_password">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Host') }}</label>
+            <div class="controls">
+                <input type="text" id="db_host" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_host">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Port') }}</label>
+            <div class="controls">
+                <input type="number" id="db_port" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_port">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Database') }}</label>
+            <div class="controls">
+                <input type="text" id="db_database" data-bind="value: settingsViewModel.settings.plugins.printerHistory.db_database">
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <div class="controls">
+                <button id="test_connection" class="btn btn-primary">{{ _('Test Connection - Save changes') }}</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="controls">
+                <span id="connection_status" data-bind="text: connectionStatus"></span>
+            </div>
         </div>
     </div>
 
     <br>
 
-    <h3>Printer Settings</h3>
+    <div class="group2">
 
-    <div class="control-group">
-        <label class="control-label">{{ _('ID') }}</label>
-        <div class="controls">
-            <input type="text" readonly id="printer_id" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_id">
+        <h3>Printer Settings</h3>
+        <h4>Before updating the printer data, configure the connection to the database</h4>
+        
+        <div class="control-group">
+            <label class="control-label">{{ _('ID') }}</label>
+            <div class="controls">
+                <input type="text" readonly id="printer_id" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_id">
+            </div>
         </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Name') }}</label>
+            <div class="controls">
+                <input type="text" readonly id="printer_name" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_name">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Model') }}</label>
+            <div class="controls">
+                <input type="text" readonly id="printer_model" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_model">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Brand') }}</label>
+            <div class="controls">
+                <input type="text" readonly id="printer_brand" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_brand">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Power consumption Watts (W)') }}</label>
+            <div class="controls">
+                <input type="number" readonly id="printer_power_consumption" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_power_consumption">
+            </div>
+        </div>
+
+                <div class="control-group">
+            <div class="controls">
+                <button id="printerUpdate" disabled class="btn btn-primary">{{ _('Save Changes to Printer') }}</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="controls">
+                <span id="printerStatus" data-bind="text: printerStatus"></span>
+            </div>
+        </div>
+
     </div>
 
-    <div class="control-group">
-        <label class="control-label">{{ _('Name') }}</label>
-        <div class="controls">
-            <input type="text" id="printer_name" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_name">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Model') }}</label>
-        <div class="controls">
-            <input type="text" id="printer_model" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_model">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Brand') }}</label>
-        <div class="controls">
-            <input type="text" id="printer_brand" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_brand">
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label class="control-label">{{ _('Power consumption Watts (W)') }}</label>
-        <div class="controls">
-            <input type="text" id="printer_power_consumption" data-bind="value: settingsViewModel.settings.plugins.printerHistory.printer_power_consumption">
-        </div>
-    </div>
 </form>

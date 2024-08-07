@@ -38,18 +38,18 @@ class DatabaseManager:
             connection = pymysql.connect(**db_config)
             connection.close()
             self.logger.info("Successfully connected to the database.")
-            return {"status": "success", "message": "Connection successful"}
+            return {"error": False, "message": "Connection successful"}
         except Error as e:
             self.logger.error(f"Error connecting to MySQL database: {e}")
-            return {"status": "error", "message": str(e)}
-
+            return {"error": True, "message": str(e)}
+        
     def get_connection(self):
         """
         Establishes and returns a connection to the database.
         """
         if not self.connection_settings:
             self.logger.error("Database configuration is not set.")
-            return {"status": "error", "message": str(e)}
+            return {"error": True, "message": "Database configuration is not set."}
         try:
             if self.connection is None or not self.connection.open:
                 self.connection = pymysql.connect(**self.connection_settings)
@@ -57,7 +57,7 @@ class DatabaseManager:
             return self.connection
         except Error as e:
             self.logger.error(f"Error connecting to MySQL database: {e}")
-            return {"status": "error", "message": str(e)}
+            return {"error": True, "message": str(e)}
 
     def close_connection(self):
         """
@@ -99,42 +99,40 @@ class DatabaseManager:
             except Error as e:
                 self.logger.error(f"Error executing query: {e}")
                 connection.rollback()
-                return {"status": "error", "message": str(e)}
-        else:
-            return {"status": "error", "message": "No connection"}
-            
+
     def _update_insert_printer_config(self, printer_data):        
         """
         Inserts or updates printer configuration in the database.
         """
         printer_id = printer_data.get('printer_id', 0) if printer_data.get('printer_id') is not None else 0
+        power_consumption = printer_data.get('printer_power_consumption', 0) if printer_data.get('printer_power_consumption') is not None else 0
         brand = printer_data.get('printer_brand')
         model = printer_data.get('printer_model')
         name = printer_data.get('printer_name')
-        power_consumption = printer_data.get('printer_power_consumption', 0.0)
-
+        
         connection = self.get_connection()
         if connection:
             try:
                 with connection.cursor() as cursor:
                     # Check if the printer already exists
-                    existing_printer_query = "SELECT printer_id FROM OctoPrint.Printer WHERE printer_id = %s"
+                    existing_printer_query = f"""SELECT printer_id FROM {self.connection_settings['database']}.Printer WHERE printer_id = %s"""
                     existing_printer = self.execute_query(existing_printer_query, params=(printer_id), fetchone=True)
 
                     if existing_printer:
                         # Update existing printer
-                        update_query = """
-                            UPDATE OctoPrint.Printer
+                        update_query = f"""
+                            UPDATE {self.connection_settings['database']}.Printer
                             SET brand = %s, model = %s, name = %s, power_consumption = %s
                             WHERE printer_id = %s
                         """
                         params = (brand, model, name, power_consumption, printer_id)
                         self.execute_query(update_query, params=params)
                         self.logger.info(f"Updated Printer record with ID {printer_id}")
+                        result = {"error": False, "printer_id": printer_id, "update": True}
                     else:
                         # Insert new printer
-                        insert_query = """
-                            INSERT INTO OctoPrint.Printer (brand, model, name, power_consumption)
+                        insert_query = f"""
+                            INSERT INTO {self.connection_settings['database']}.Printer (brand, model, name, power_consumption)
                             VALUES (%s, %s, %s, %s)
                         """
                         params = (brand, model, name, power_consumption)
@@ -145,16 +143,59 @@ class DatabaseManager:
                         result = self.execute_query(last_id_query, fetchone=True)
                         printer_id = result[0] if result else None
                         self.logger.info(f"Inserted new Printer record with ID {printer_id}")
-
+                        result = {"error": False, "printer_id": printer_id, "insert": True}
+                
                 connection.commit()
 
             except Error as e:
                 self.logger.error(f"Error executing query: {e}")
                 connection.rollback()
-                return {"status": "error", "message": str(e)}
+                result = {"error": True, "message": str(e)}
             finally:
                 self.logger.info(f"Returning printer_id: {printer_id}")
                 self.close_connection()
-                return {"id": printer_id}
-        else:
-            return {"status": "error", "message": "No connection"}
+                return result
+
+    def _select_printer_config(self, id):
+        """
+        Select printer configuration in the database and return all details.
+        """
+        # Default to 0 if id is None
+        printer_id = id if id is not None else 0
+
+        connection = self.get_connection()
+        if connection:
+            try:
+                with connection.cursor() as cursor:
+                    select_query = f"""
+                        SELECT printer_id, brand, model, name, power_consumption
+                        FROM {self.connection_settings['database']}.Printer
+                        WHERE printer_id = %s
+                    """
+                    # Execute query to fetch all details for the given printer_id
+                    result = self.execute_query(select_query, params=(printer_id,), fetchone=True)
+
+                    if result:
+                        # Return all details as a dictionary
+                        printer_data = {
+                            "printer_id": result[0],
+                            "brand": result[1],
+                            "model": result[2],
+                            "name": result[3],
+                            "power_consumption": result[4]
+                        }
+                        self.logger.info(f"Fetched Printer record with ID {printer_id}: {printer_data}")
+                        result = {"error": False, "printer_data": printer_data}
+                    else:
+                        self.logger.info(f"No Printer record found with ID {printer_id}")
+                        result = {"error": True, "message": "No printer found with the provided ID"}
+
+                connection.commit()
+
+            except Error as e:
+                connection.rollback()
+                self.logger.error(f"Error executing query: {e}")
+                result = {"error": True, "message": str(e)}
+            finally:
+                self.close_connection()
+                return result
