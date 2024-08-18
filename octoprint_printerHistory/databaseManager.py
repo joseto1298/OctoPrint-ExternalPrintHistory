@@ -10,7 +10,11 @@ class DatabaseManager:
 
     def _set_connection_settings(self, config):
         """
-        Sets the database connection settings.
+        The function `_set_connection_settings` sets the database connection settings based on the provided
+        configuration.
+        
+        :param config: The `_set_connection_settings` method takes a `config` dictionary as input, which
+        contains the following keys:
         """
         db_config = {
         'host': config.get('db_host'),
@@ -24,7 +28,13 @@ class DatabaseManager:
         
     def _test_connection(self, config):
         """
-        Tests the database connection.
+        The `_test_connection` function tests the database connection using the provided configuration
+        parameters.
+        
+        :param config: The `_test_connection` method is used to test the database connection using the
+        provided configuration parameters. The `config` parameter is a dictionary containing the following
+        database connection details:
+        :return: The `_test_connection` method returns a dictionary with two keys: "error" and "message".
         """
         db_config = {
         'host': config.get('db_host'),
@@ -45,7 +55,11 @@ class DatabaseManager:
         
     def get_connection(self):
         """
-        Establishes and returns a connection to the database.
+        The function `get_connection` establishes and returns a connection to a database using pymysql
+        in Python.
+        :return: The `get_connection` method returns either the established connection to the database
+        if successful, or a dictionary with an error message if there was an issue with the database
+        configuration or connecting to the database.
         """
         if not self.connection_settings:
             self.logger.error("Database configuration is not set.")
@@ -61,7 +75,7 @@ class DatabaseManager:
 
     def close_connection(self):
         """
-        Closes the database connection.
+        The `close_connection` function closes the database connection and logs the status.
         """
         if self.connection:
             try:
@@ -72,13 +86,28 @@ class DatabaseManager:
 
     def execute_query(self, query, params=None, fetchone=False, fetchall=False):
         """
-        Executes a given SQL query with optional parameters.
-
-        :param query: The SQL query to execute.
-        :param params: The parameters to pass to the SQL query.
-        :param fetchone: If True, fetch and return a single result.
-        :param fetchall: If True, fetch and return all results.
-        :return: The result of the query, or None if an error occurs.
+        The function `execute_query` executes a SQL query with optional parameters and fetches either one
+        or all results based on the specified flags.
+        
+        :param query: The `query` parameter in the `execute_query` method is a SQL query string that you
+        want to execute against the database. It represents the SQL statement that you want to run, such
+        as a SELECT, INSERT, UPDATE, or DELETE statement
+        :param params: The `params` parameter in the `execute_query` method is used to pass any parameters
+        that need to be substituted into the SQL query. These parameters can be used to make the query
+        dynamic and prevent SQL injection attacks. When the query is executed, the parameters are
+        substituted into the query in a safe
+        :param fetchone: The `fetchone` parameter in the `execute_query` method is used to determine
+        whether to fetch only one row of the query result. If `fetchone` is set to `True`, the method will
+        fetch and return only the first row of the query result. If `fetchone` is, defaults to False
+        (optional)
+        :param fetchall: The `fetchall` parameter in the `execute_query` method is used to determine
+        whether to fetch all the results of the query execution. If `fetchall` is set to `True`, the
+        method will fetch all the results returned by the query. If `fetchall` is set to `, defaults to
+        False (optional)
+        :return: The `execute_query` method returns the result of the query execution based on the
+        parameters `fetchone` and `fetchall`. If `fetchone` is set to True, it returns a single row as a
+        tuple. If `fetchall` is set to True, it returns all rows as a list of tuples. If neither
+        `fetchone` nor `fetchall` is set to True
         """
         connection = self.get_connection()
         if connection:
@@ -92,20 +121,33 @@ class DatabaseManager:
                     else:
                         result = None
 
-                    # No commit here; only use it for transactions
                     self.logger.info(f"Query executed successfully: {query}")
                     return result
 
             except Error as e:
                 self.logger.error(f"Error executing query: {e}")
-                connection.rollback()
+                raise 
 
     def _update_insert_printer_config(self, printer_data):        
         """
-        Inserts or updates printer configuration in the database.
+        The function `_update_insert_printer_config` updates or inserts printer configuration data into
+        a database based on the provided input.
+        
+        :param printer_data: The given code snippet is a method that updates or inserts printer
+        configuration data into a database table. It first extracts the necessary information from the
+        `printer_data` dictionary, such as `printer_id`, `power_consumption`, `purchase_price`,
+        `estimated_lifespan`, `maintenance_costs`, `brand
+        :return: The function `_update_insert_printer_config` returns a dictionary `result` which
+        contains information about the operation performed. The dictionary may have keys such as "error"
+        to indicate if there was an error during the operation, "printer_id" to provide the ID of the
+        printer involved, "update" to indicate if an update was performed, and "insert" to indicate if a
+        new record was inserted.
         """
-        printer_id = printer_data.get('printer_id', 0) if printer_data.get('printer_id') is not None else 0
-        power_consumption = printer_data.get('printer_power_consumption', 0) if printer_data.get('printer_power_consumption') is not None else 0
+        printer_id = printer_data.get('printer_id', 0)
+        power_consumption = printer_data.get('printer_power_consumption', 0)
+        purchase_price = printer_data.get('printer_purchase_price', 0) 
+        estimated_lifespan = printer_data.get('printer_estimated_lifespan', 0)
+        maintenance_costs = printer_data.get('printer_maintenance_costs', 0)
         brand = printer_data.get('printer_brand')
         model = printer_data.get('printer_model')
         name = printer_data.get('printer_name')
@@ -113,7 +155,7 @@ class DatabaseManager:
         connection = self.get_connection()
         if connection:
             try:
-                with connection.cursor() as cursor:
+                with connection.cursor():
                     # Check if the printer already exists
                     existing_printer_query = f"""SELECT printer_id FROM {self.connection_settings['database']}.Printer WHERE printer_id = %s"""
                     existing_printer = self.execute_query(existing_printer_query, params=(printer_id), fetchone=True)
@@ -122,20 +164,20 @@ class DatabaseManager:
                         # Update existing printer
                         update_query = f"""
                             UPDATE {self.connection_settings['database']}.Printer
-                            SET brand = %s, model = %s, name = %s, power_consumption = %s
+                            SET brand = %s, model = %s, name = %s, power_consumption = %s , purchase_price = %s, estimated_lifespan = %s, maintenance_costs = %s
                             WHERE printer_id = %s
                         """
-                        params = (brand, model, name, power_consumption, printer_id)
+                        params = (brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs, printer_id)
                         self.execute_query(update_query, params=params)
                         self.logger.info(f"Updated Printer record with ID {printer_id}")
                         result = {"error": False, "printer_id": printer_id, "update": True}
                     else:
                         # Insert new printer
                         insert_query = f"""
-                            INSERT INTO {self.connection_settings['database']}.Printer (brand, model, name, power_consumption)
-                            VALUES (%s, %s, %s, %s)
+                            INSERT INTO {self.connection_settings['database']}.Printer (brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """
-                        params = (brand, model, name, power_consumption)
+                        params = (brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs)
                         self.execute_query(insert_query, params=params)
 
                         # Get the last inserted ID
@@ -148,7 +190,6 @@ class DatabaseManager:
                 connection.commit()
 
             except Error as e:
-                self.logger.error(f"Error executing query: {e}")
                 connection.rollback()
                 result = {"error": True, "message": str(e)}
             finally:
@@ -156,19 +197,26 @@ class DatabaseManager:
                 self.close_connection()
                 return result
 
+
     def _select_printer_config(self, id):
         """
-        Select printer configuration in the database and return all details.
+        The function `_select_printer_config` selects and returns details of a printer configuration
+        from a database based on the provided ID.
+        
+        :param id: The `id` parameter in the `_select_printer_config` method is used to specify the
+        printer ID for which you want to fetch details from the database. If the `id` is provided, it
+        will be used for fetching details of the corresponding printer. If `id` is `None`, then
+        :return: The `_select_printer_config` method returns a dictionary containing information about a
+        printer based on the provided printer ID. The returned dictionary has two possible structures:
         """
-        # Default to 0 if id is None
         printer_id = id if id is not None else 0
 
         connection = self.get_connection()
         if connection:
             try:
-                with connection.cursor() as cursor:
+                with connection.cursor():
                     select_query = f"""
-                        SELECT printer_id, brand, model, name, power_consumption
+                        SELECT printer_id, brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs
                         FROM {self.connection_settings['database']}.Printer
                         WHERE printer_id = %s
                     """
@@ -182,7 +230,10 @@ class DatabaseManager:
                             "brand": result[1],
                             "model": result[2],
                             "name": result[3],
-                            "power_consumption": result[4]
+                            "power_consumption": result[4],
+                            "purchase_price": result[5],
+                            "estimated_lifespan": result[6],
+                            "maintenance_costs": result[7],
                         }
                         self.logger.info(f"Fetched Printer record with ID {printer_id}: {printer_data}")
                         result = {"error": False, "printer_data": printer_data}
@@ -194,8 +245,9 @@ class DatabaseManager:
 
             except Error as e:
                 connection.rollback()
-                self.logger.error(f"Error executing query: {e}")
                 result = {"error": True, "message": str(e)}
             finally:
                 self.close_connection()
                 return result
+
+

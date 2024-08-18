@@ -61,9 +61,7 @@ class EventHandler :
         return self.plugin._file_manager.get_metadata(payload["origin"], payload["path"])
 
     def _extract_print_parameters(self, payload):
-        """
-        Extracts parameters of the print from the event payload.
-        """
+        
         return {
             "file_name": payload.get("name", "N/A"),
             "file_path": payload.get("path", "N/A"),
@@ -89,3 +87,4 @@ class EventHandler :
         else:
             self.logger.error(f"Plugin '{plugin_identifier}' not found.")
             return None
+
