@@ -20,11 +20,12 @@ class ConfigurationManager:
         """
         self.logger = logger
         self.plugin = plugin
+        
         self.key_file_path = None
         self.salt_file_path = None
-        self.config_file_path = None
         self.config_folder_path = None
-
+        self.config_file_path = None
+        
     def _create_config_file(self):
         """
         The `_create_config_file` function creates a configuration file with default settings if it does
@@ -32,43 +33,40 @@ class ConfigurationManager:
         """
         self.config_folder_path = self.plugin.get_plugin_data_folder()
         self.config_file_path = os.path.join(self.config_folder_path, "config.json")
-
+    
         if not os.path.exists(self.config_folder_path):
             os.makedirs(self.config_folder_path)
         if not os.path.exists(self.config_file_path):
-            default_config = self.get_default_config()
             try:
-                with open(self.config_file_path, 'w', encoding='utf-8') as f:
-                    json.dump(default_config, f, indent=4)
+                with open(self.config_file_path, 'w') as config_file:
+                    config_file.write(json.dumps(self._get_default_config(), indent=4))
             except Exception as e:
                 self.logger.error(f"Error creating configuration file: {e}")
-            
-    def get_default_config(self):
-        """
-        The function `get_default_config` returns a default configuration dictionary with preset values
-        for database connection, printer ID, currency symbol, and electricity cost.
-        :return: A dictionary containing default configuration settings for a system or application. The
-        dictionary includes keys such as "db_user", "db_password", "db_host", "db_port", "db_database",
-        "printer_id", "currency", and "electricity_cost" with corresponding default values.
-        """
+
+    def _get_default_config(self):
         return {
-            "db_user": "user",
-            "db_password": "password",
-            "db_host": "host",
-            "db_port": "3306",
-            "db_database": "database",
+            "db_user": "",
+            "db_password": "",
+            "db_host": "",
+            "db_port": 3306,
+            "db_database": "",
             "printer_id": 0,
             "currency": "\u20ac",
-            "electricity_cost": 0.0
+            "electricity_cost": 0.0,
+            "plugin_check_activated": True
         }
 
-    def _initialize_config_files(self):
-        """
-        The function `_initialize_config_files` initializes key, salt, and creates a configuration file.
-        """
-        self._initialize_key_and_salt()
-        self._create_config_file()
-
+    def _get_printer_data(self):
+        return {
+        "printer_name": "",
+        "printer_brand": "",
+        "printer_model": "",
+        "printer_power_consumption": 0,
+        "printer_purchase_price": 0,
+        "printer_estimated_lifespan": 0,
+        "printer_maintenance_costs": 0 
+        }
+                
     def _load_existing_config(self):
         """
         The function `_load_existing_config` reads and returns a JSON configuration file, logging an error
@@ -97,10 +95,20 @@ class ConfigurationManager:
         try:
             with open(self.config_file_path, 'w', encoding='utf-8') as f:
                 json.dump(updated_settings, f, indent=4)
-            self.logger.info("Configuration updated successfully.")
+            #self.logger.info("Configuration updated successfully.")
         except Exception as e:
             self.logger.error(f"Failed to save configuration: {e}")
-
+    
+    #def _initialize_settings(self, settings):
+    #    self.settings = settings
+    
+    def _initialize_config_files(self):
+        """
+        The function `_initialize_config_files` initializes key, salt, and creates a configuration file.
+        """
+        self._initialize_key_and_salt()
+        self._create_config_file()
+        
     def _initialize_key_and_salt(self):
         """
         Initializes the encryption key and salt for the plugin.
@@ -166,7 +174,7 @@ class ConfigurationManager:
         Raises:
             ValueError: If the encrypted password is not a valid base64 encoded string.
             KeyError: If the decryption key is not valid.
-            binascii.Error: If the ciphertext is not valid.
+            binascii.Error: If the ciphertext is not valid.º
 
         """
         try:
@@ -177,3 +185,91 @@ class ConfigurationManager:
         except (ValueError, KeyError, binascii.Error) as e:
             self.logger.error(f"Decryption failed: {e}")
             return None
+
+    #def _get_database_settings(self):
+    #    db_config = {
+    #    'db_host': self.settings.get(['db_host']) or 'HOST',
+    #    'db_user': self.settings.get(['db_user']) or 'USER',
+    #    'db_password': self.settings.get(['db_password']) or 'PASSWORD',
+    #    'db_database': self.settings.get(['db_password']) or 'DATABASE',
+    #    'db_port': self.settings.get(['db_port']) or 3306
+    #    }
+    #    
+    #    return db_config
+    
+    #def _get_settings(self):
+    #    config = {}
+    #    config["printer_id"] = self.settings.get(['printer_id']) or 0
+    #    config["currency"] = self.settings.get(['currency']) or "\u20ac"
+    #    config["electricity_cost"] = self.settings.get(['electricity_cost']) or 0.0
+    #    config["plugin_check_activated"] = self.settings.get_boolean(['plugin_check_activated']) or True    
+    #    
+    #    return config
+    
+    #def _save_setting(self, data):
+    #        config = {}
+    #        
+    #        for key, value in data.items():
+    #            self.settings.set([str(key)], value)
+    #            config[key] = value
+    #        
+    #        self.settings.save()
+    #        
+    #        for key in data.keys():
+    #            saved_value = self.settings.get([str(key)])
+    #            self.logger.info(f"Saved setting: {key} = {saved_value}")
+    #        
+    #        self.logger.info(f"Saved settings in config: {config}")
+    #        
+    #        return config
+    
+    def _transform_printer_data(self, data):
+        config = {}
+        printer_info = data.get('printer_data', {})
+        config["printer_name"] = printer_info.get("name", "")
+        config["printer_model"] = printer_info.get("model", "")
+        config["printer_brand"] = printer_info.get("brand", "")
+        config["printer_power_consumption"] = printer_info.get("power_consumption", 0)
+        config["printer_purchase_price"] = printer_info.get("purchase_price", 0)
+        config["printer_estimated_lifespan"] = printer_info.get("estimated_lifespan", 0)
+        config["printer_maintenance_costs"] = printer_info.get("maintenance_costs", 0)
+        
+        return config
+    
+    def _update_dictionaries_on_save(self, data, config, printer_data):
+        keys_printer_to_check = [
+        "printer_name",
+        "printer_model",
+        "printer_brand",
+        "printer_power_consumption",
+        "printer_purchase_price",
+        "printer_estimated_lifespan",
+        "printer_maintenance_costs"
+        ]
+        keys_config_to_check = [
+        "db_user",
+        "db_password",
+        "db_port",
+        "db_host",
+        "db_database",
+        "currency",
+        "electricity_cost",
+        "plugin_check_activated"
+        ]
+        
+        for key in keys_printer_to_check:
+            if key in data:
+                printer_data[key] = data.get(key)
+                
+        for key in keys_config_to_check:
+            if key in data:
+                config[key] = data.get(key)
+                
+        #self.logger.info("Saved config: " + str(config))
+        #self.logger.info("Saved printer: " + str(printer_data))
+        
+        return config, printer_data
+    
+        # popupType = 'notice', 'info', 'success', or 'error'.
+    def _showPopUp(self, popupType, title, message, hide):
+            self.plugin._plugin_manager.send_plugin_message(self.plugin._identifier, dict(action="showPopUp", popupType=popupType, title=title, message=message, hide=hide))

@@ -1,4 +1,4 @@
 include README.md
-recursive-include octoprint_printerHistory/templates *
-recursive-include octoprint_printerHistory/translations *
-recursive-include octoprint_printerHistory/static *
+recursive-include octoprint_ExternalPrintHistory/templates *
+recursive-include octoprint_ExternalPrintHistory/translations *
+recursive-include octoprint_ExternalPrintHistory/static *

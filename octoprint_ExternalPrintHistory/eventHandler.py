@@ -1,33 +1,11 @@
 import base64
 import os
 from octoprint.events import Events
-from .printerHistory import Print
 
 class EventHandler :
     def __init__(self, plugin, logger):
         self.logger = logger
         self.plugin = plugin
-        self.print = Print(plugin=self, logger=logger)              
-
-    def handle_event(self, event, payload):
-    
-        #self.logger.info(f"Handling event: {event} {payload}")
-
-        if event == Events.PRINT_STARTED:
-            self._handle_print_started(payload)
-
-        elif event == Events.PRINT_DONE:
-            self._handle_print_done(payload)
-
-        elif event == Events.PRINT_FAILED:
-            self._handle_print_failed(payload)
-
-        elif event == Events.METADATA_STATISTICS_UPDATED:
-            self._handle_metadata_statistics_updated(payload)
-
-        # unsupported event
-        #else:
-            #self.logger.info(f"Unsupported event: {event}")
 
     def _handle_print_started(self, payload):
         self.logger.info("Print started")
@@ -36,15 +14,30 @@ class EventHandler :
         self.logger.info(f"metadata: {metadata}")
         self.logger.info(f"payload: {payload}")
 
-        thumbnail_path = self._takeThumbnailImage(metadata)
-        
+        thumbnail_path = self._takeThumbnailImage(metadata.get("thumbnail",""))
+
         self.logger.info(f"thumbnail_path: {thumbnail_path}")
 
-        #thumbnail_path
         #print_id 
-        #order_id
         #printer_id
-
+        #start_datetime	
+        #end_datetime
+        #duration
+        #estimated_time
+        #thumbnail
+        #calculated_length
+        #total_length
+        #calculated_height
+        #total_height
+        #calculated_layers
+        #total_layers
+        #calculated_weight
+        #total_weight
+        #nozzle_temperature
+        #bed_temperature
+        #print_time
+        #printer_state
+        #file_path
 
     def _handle_print_done(self, payload):
         self.logger.info("Print done: %s", payload)
@@ -55,7 +48,6 @@ class EventHandler :
     def _handle_metadata_statistics_updated(self, payload):
         self.logger.info("Metadata statistics updated: %s", payload)
         #self._update_metadata(payload)
-
 
     def get_metadata(self, payload):
         return self.plugin._file_manager.get_metadata(payload["origin"], payload["path"])
@@ -72,8 +64,8 @@ class EventHandler :
             #"thumbnail": self._takeThumbnailImage(payload.get("path"))  # Extract thumbnail
         }
     
-    def _takeThumbnailImage(self, metadata):        
-            thumbnail_path = thumbnail_path.split('?')[0]
+    def _takeThumbnailImage(self, path):        
+            thumbnail_path = path.split('?')[0]
             return thumbnail_path
     
 
@@ -88,3 +80,19 @@ class EventHandler :
             self.logger.error(f"Plugin '{plugin_identifier}' not found.")
             return None
 
+    def _handle_metadata_statistics_updated(self, payload):
+        file_info = payload.get("file", {})
+        statistics = payload.get("statistics", {})
+
+        filament_length = statistics.get("filament_length", "Unknown")
+        print_time = statistics.get("print_time", "Unknown")
+
+        self.logger.info(f"File: {file_info.get('name', 'Unknown')}")
+        self.logger.info(f"Filament Length: {filament_length} mm")
+        self.logger.info(f"Print Time: {print_time} minutes")
+        
+    def _handle_metadata_analysis_finished(self, payload):
+        name = payload.get("path")
+        estimatedPrintTime = payload.get("estimatedPrintTime")
+        filament = payload.get("filament")
+        
