@@ -1,15 +1,17 @@
+# coding=utf-8
+from __future__ import absolute_import
+
 import logging
 import semantic_version
-from .SettingsKeys import SettingsKeys
+from ..common.SettingsKeys import SettingsKeys
 
-class PluginChecker:
+class PluginChecker():
     
     PLUGIN_DEPENDENCY_CHECK = "pluginCheckActivated"
 
-    def __init__(self, plugin, logger):
-        self.logger = logger
+    def __init__(self,plugin,_logger):
+        self._logger = _logger
         self.plugin = plugin
-        
         self._pluginImplementation = None
         self._preHeatPluginImplementationState = None
         self._displayLayerProgressPluginImplementation = None
@@ -44,7 +46,7 @@ class PluginChecker:
         prusaSlicerCurrentVersion = pluginInfo[2]
         prusaSlicerRequiredVersion = pluginInfo[3]
 
-        self.logger.info("Plugin-State information:\n"
+        self._logger.info("Plugin-State information:\n"
                             "| PreHeat=" + self._preHeatPluginImplementationState + " (" + str(preHeatCurrentVersion) + ")\n"
                             "| DisplayLayerProgress=" + self._displayLayerProgressPluginImplementationState + " (" + str(displayLayerCurrentVersion) + ")\n"
                             "| UltimakerFormat=" + self._ultimakerFormatPluginImplementationState + " (" + str(ultimakerCurrentVersion) + ")\n"

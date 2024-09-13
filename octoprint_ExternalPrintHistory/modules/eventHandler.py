@@ -1,22 +1,25 @@
+# coding=utf-8
+from __future__ import absolute_import
+
 import base64
 import os
 from octoprint.events import Events
 
-class EventHandler :
-    def __init__(self, plugin, logger):
-        self.logger = logger
+class EventHandler():
+    def __init__(self,plugin,_logger):
+        self._logger = _logger
         self.plugin = plugin
-
+        
     def _handle_print_started(self, payload):
-        self.logger.info("Print started")
+        self._logger.info("Print started")
         metadata = self.get_metadata(payload)
 
-        self.logger.info(f"metadata: {metadata}")
-        self.logger.info(f"payload: {payload}")
+        self._logger.info(f"metadata: {metadata}")
+        self._logger.info(f"payload: {payload}")
 
         thumbnail_path = self._takeThumbnailImage(metadata.get("thumbnail",""))
 
-        self.logger.info(f"thumbnail_path: {thumbnail_path}")
+        self._logger.info(f"thumbnail_path: {thumbnail_path}")
 
         #print_id 
         #printer_id
@@ -40,17 +43,17 @@ class EventHandler :
         #file_path
 
     def _handle_print_done(self, payload):
-        self.logger.info("Print done: %s", payload)
+        self._logger.info("Print done: %s", payload)
        
     def _handle_print_failed(self, payload):
-        self.logger.info("Print failed: %s", payload)
+        self._logger.info("Print failed: %s", payload)
       
     def _handle_metadata_statistics_updated(self, payload):
-        self.logger.info("Metadata statistics updated: %s", payload)
+        self._logger.info("Metadata statistics updated: %s", payload)
         #self._update_metadata(payload)
 
     def get_metadata(self, payload):
-        return self.plugin._file_manager.get_metadata(payload["origin"], payload["path"])
+        return self._file_manager.get_metadata(payload["origin"], payload["path"])
 
     def _extract_print_parameters(self, payload):
         
@@ -73,11 +76,11 @@ class EventHandler :
         """
         Retrieves the data folder path for another plugin by its identifier.
         """
-        plugin_instance = self.plugin._plugin_manager.get_plugin(plugin_identifier)
+        plugin_instance = self._plugin_manager.get_plugin(plugin_identifier)
         if plugin_instance:
             return plugin_instance.get_plugin_data_folder()
         else:
-            self.logger.error(f"Plugin '{plugin_identifier}' not found.")
+            self._logger.error(f"Plugin '{plugin_identifier}' not found.")
             return None
 
     def _handle_metadata_statistics_updated(self, payload):
@@ -87,9 +90,9 @@ class EventHandler :
         filament_length = statistics.get("filament_length", "Unknown")
         print_time = statistics.get("print_time", "Unknown")
 
-        self.logger.info(f"File: {file_info.get('name', 'Unknown')}")
-        self.logger.info(f"Filament Length: {filament_length} mm")
-        self.logger.info(f"Print Time: {print_time} minutes")
+        self._logger.info(f"File: {file_info.get('name', 'Unknown')}")
+        self._logger.info(f"Filament Length: {filament_length} mm")
+        self._logger.info(f"Print Time: {print_time} minutes")
         
     def _handle_metadata_analysis_finished(self, payload):
         name = payload.get("path")
