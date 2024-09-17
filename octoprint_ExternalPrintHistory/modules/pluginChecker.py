@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import logging
 import semantic_version
-from ..common.SettingsKeys import SettingsKeys
+from ..common.PluginsKeys import PluginsKeys
 
 class PluginChecker():
     
@@ -22,25 +22,25 @@ class PluginChecker():
         self._prusaSlicerThumbnailsPluginImplementationState = None
 
     def _checkAndLoadThirdPartyPluginInfos(self):
-        pluginInfo = self._getPluginInformation(SettingsKeys.PLUGIN_PREHEAT)
+        pluginInfo = self._getPluginInformation(PluginsKeys.PLUGIN_PREHEAT)
         self._preHeatPluginImplementationState = pluginInfo[0]
         self._preHeatPluginImplementation = pluginInfo[1]
         preHeatCurrentVersion = pluginInfo[2]
         preHeatRequiredVersion = pluginInfo[3]
 
-        pluginInfo = self._getPluginInformation(SettingsKeys.PLUGIN_DISPLAY_LAYER_PROGRESS)
+        pluginInfo = self._getPluginInformation(PluginsKeys.PLUGIN_DISPLAY_LAYER_PROGRESS)
         self._displayLayerProgressPluginImplementationState = pluginInfo[0]
         self._displayLayerProgressPluginImplementation = pluginInfo[1]
         displayLayerCurrentVersion = pluginInfo[2]
         displayLayerRequiredVersion = pluginInfo[3]
 
-        pluginInfo = self._getPluginInformation(SettingsKeys.PLUGIN_ULTIMAKER_FORMAT_PACKAGE)
+        pluginInfo = self._getPluginInformation(PluginsKeys.PLUGIN_ULTIMAKER_FORMAT_PACKAGE)
         self._ultimakerFormatPluginImplementationState = pluginInfo[0]
         self._ultimakerFormatPluginImplementation = pluginInfo[1]
         ultimakerCurrentVersion = pluginInfo[2]
         ultimakerRequiredVersion = pluginInfo[3]
 
-        pluginInfo = self._getPluginInformation(SettingsKeys.PLUGIN_PRUSA_SLICER_THUMNAIL)
+        pluginInfo = self._getPluginInformation(PluginsKeys.PLUGIN_PRUSA_SLICER_THUMNAIL)
         self._prusaSlicerThumbnailsPluginImplementationState = pluginInfo[0]
         self._prusaSlicerThumbnailsPluginImplementation = pluginInfo[1]
         prusaSlicerCurrentVersion = pluginInfo[2]

@@ -11,6 +11,28 @@ class DatabaseManager():
         self.connection_settings = None
         self.connection = None
 
+    def _test_connection(self, config):
+        try:
+            settings = {
+                'host': config.get('db_host'),
+                'user': config.get('db_user'),
+                'password': config.get('db_password'),
+                'database': config.get('db_database'),
+                'port': int(config.get('db_port'))
+            }
+            with pymysql.connect(**settings) as connection:
+                #self._logger.info("Database connection test successful.")
+                return {"error": False, "message": "Connection successful"}
+        except KeyError as e:
+            self._logger.error("Missing configuration key: " + str(e))
+            raise MySQLError("Error setting connection settings: Missing configuration key") from e
+        except MySQLError as e:
+            self._logger.error("Error testing DB connection: " + str(e))
+            return {"error": True, "message": str(e)}
+        except Exception as e:
+            self._logger.error("Unexpected error during DB connection test: " + str(e))
+            return {"error": True, "message": "An unexpected error occurred: " + str(e)}
+        
     def _set_and_test_connection(self, config):
         try:
             self.connection_settings = {

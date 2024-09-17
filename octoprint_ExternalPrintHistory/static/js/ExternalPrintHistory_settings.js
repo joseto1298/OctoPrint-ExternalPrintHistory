@@ -52,20 +52,11 @@ $(function () {
         };
 
         self.selectPrinter = function () {
-            const settings = {
-                printer_id: $("#printer_id").val(),
-                db_user: $("#db_user").val(),
-                db_password: $("#db_password").val(),
-                db_host: $("#db_host").val(),
-                db_port: $("#db_port").val(),
-                db_database: $("#db_database").val(),
-            };
-
             self.statusInputPrinter(true);
             self.toggleSpinner("spinner_printer_data", true);
             $("#data_Printer").prop("disabled", true);
             self.api
-                .selectPrinter(settings)
+                .selectPrinter({})
                 .then((response) => {
                     //console.log(response);
                     if (response.error == false) {
@@ -73,9 +64,6 @@ $(function () {
                         if (response.printer_data) {
                             $("#printerStatus").text(
                                 "Data loaded successfully"
-                            );
-                            $("#printer_id").val(
-                                response.printer_data.printer_id
                             );
                             $("#printer_name").val(response.printer_data.name);
                             $("#printer_model").val(

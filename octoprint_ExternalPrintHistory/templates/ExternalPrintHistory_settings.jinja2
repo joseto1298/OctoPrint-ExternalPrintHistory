@@ -39,7 +39,8 @@
                 <label class="control-label">{{ _('Password') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="text" class="input-large" minlength="1" maxlength="50" id="db_password" required
+                        <input type="password" class="input-large" minlength="1" maxlength="50" id="db_password"
+                            required
                             data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_password">
                     </div>
                 </div>
@@ -171,21 +172,10 @@
             <h4>Other printer settings</h4>
 
             <div class="control-group">
-                <label class="control-label">{{ _('ID') }}</label>
-                <div class="controls">
-                    <div class="input-append">
-                        <input type="text" class="input-large" readonly id="printer_id"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_id">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
                 <label class="control-label">{{ _('Name') }}</label>
                 <div class="controls">
                     <div class="input-append">
                         <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_name"
-                            oninput="this.value = this.value.trim();"
                             data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_name">
                     </div>
                 </div>
@@ -195,7 +185,6 @@
                 <div class="controls">
                     <div class="input-append">
                         <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_model"
-                            oninput="this.value = this.value.trim();"
                             data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_model">
                     </div>
                 </div>
@@ -206,7 +195,6 @@
                 <div class="controls">
                     <div class="input-append">
                         <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_brand"
-                            oninput="this.value = this.value.trim();"
                             data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_brand">
                     </div>
                 </div>
@@ -236,7 +224,7 @@
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="plugin_dependency_check"
                     data-bind="checked: settingsViewModel.settings.plugins.ExternalPrintHistory.plugin_dependency_check">
-                <label class="form-check-label" for="plugin_dependency_check">
+                <label class="form-check-label">
                     {{ _('Activate Plugin dependency check') }}
                 </label>
             </div>

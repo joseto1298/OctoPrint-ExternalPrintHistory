@@ -13,77 +13,90 @@ from .modules.configurationManager import ConfigurationManager
 from .modules.pluginChecker import PluginChecker
 from .common.SettingsKeys import SettingsKeys
 
-class ExternalPrintHistoryPlugin(
-    octoprint.plugin.SettingsPlugin,
-    octoprint.plugin.AssetPlugin,
-    octoprint.plugin.TemplatePlugin,
-    octoprint.plugin.StartupPlugin,
-    octoprint.plugin.EventHandlerPlugin,
-    octoprint.plugin.SimpleApiPlugin,
-    octoprint.plugin.BlueprintPlugin
-    ):
+class ExternalPrintHistoryPlugin(octoprint.plugin.StartupPlugin,
+                                octoprint.plugin.TemplatePlugin,
+                                octoprint.plugin.SettingsPlugin,
+                                octoprint.plugin.AssetPlugin,
+                                octoprint.plugin.EventHandlerPlugin,
+                                octoprint.plugin.SimpleApiPlugin,
+                                octoprint.plugin.BlueprintPlugin):
     
     def __init__(self):
         self._logger = logging.getLogger("octoprint.plugins.ExternalPrintHistory")
-        self.database_manager = DatabaseManager(plugin=self,_logger=self._logger)
-        self.event_handler = EventHandler(plugin=self,_logger=self._logger)
-        self.config_manager = ConfigurationManager(plugin=self,_logger=self._logger)
-        self.plugin_Checker = PluginChecker(plugin=self,_logger=self._logger)
+        self.database_manager = DatabaseManager(plugin=self, _logger=self._logger)
+        self.event_handler = EventHandler(plugin=self, _logger=self._logger)
+        self.config_manager = ConfigurationManager(plugin=self, _logger=self._logger)
+        self.plugin_Checker = PluginChecker(plugin=self, _logger=self._logger)
         self._isInitialized = False
 
     def initialize(self):
+        self._logger.info("Initializing ExternalPrintHistory Plugin")
         self._isInitialized = True
         
     def on_startup(self, host, port):
-        self._logger.info("ExternalPrintHistory Plugin started with configuration")
-
+        self._logger.info("ExternalPrintHistory Plugin started")
+        self.config_manager._initialize_key_and_salt()
+        settings = self.config_manager._load_config()
+        self.database_manager._set_and_test_connection(settings)
+        
     #def on_after_startup(self):
-        #self.plugin_Checker._checkAndLoadThirdPartyPluginInfos()
-
+        
     def on_shutdown(self):
         self._logger.info("Shutting down ExternalPrintHistory plugin")
+        
+    #def get_settings_defaults(self):
 
-    def get_settings_defaults(self):
-        return self.config_manager._load_config()
-    
     def on_settings_load(self):        
         return self.config_manager._load_config()
-
-    def on_settings_save(self, data):
-        #self._logger.info("data save: " + str(data))
-        
-        setting, printer_data = self.config_manager._update_dictionaries(data,self.config_manager._load_config())
-        result = self.database_manager._set_and_test_connection(setting)
-        if not result.get("error"):
-            result = self.database_manager._update_insert_printer_config(printer_data, setting["printer_id"])
-            
-        if result.get("error"):
-            self._logger.error("Error saving data: " + str(result))
-            self.config_manager._showPopUp("error", "Error saving data", "Data not updated.", False)
-        else:
-            self.config_manager._save_config(setting)
-            self.config_manager._showPopUp("success", "Saved Data", "Data was updated", True)            
     
-        #self._logger.info("Saved config: " + str(config))
-        #self._logger.info("Saved printer_data: " + str(printer_data))
+    def on_settings_save(self, data):
+        result = {"error": False}       
+        setting, printer_data = self.config_manager._update_dictionaries(data)
+        config = self.config_manager._load_config()
         
+        if setting:
+            config.update(setting)
+
+        if printer_data:
+            result = self.database_manager._set_and_test_connection(config)
+            
+            if not result.get("error"):
+                result = self.database_manager._update_insert_printer_config(printer_data, self.config_manager._get_printer_id())
+                self._logger.info(f"Result: {result}")
+            
+            if result.get("error"):
+                self._logger.error(f"Error saving data: {result}")
+                self.config_manager._showPopUp("error", "Error saving data", "Data not updated.", False)
+            elif result.get("insert"):
+                config.update({SettingsKeys.PRINTER_ID: result.get("printer_id")})
+        
+        if not result.get("error"):
+            self.config_manager._showPopUp("success", "Saved Data", "Data was updated", True)
+        
+        db_password = config.get(SettingsKeys.DB_PASSWORD)
+        encrypted_db_password = self.config_manager._encrypt(db_password)
+        config.update({SettingsKeys.DB_PASSWORD: encrypted_db_password})
+        
+        octoprint.plugin.SettingsPlugin.on_settings_save(self, config)
+
     def register_custom_events(*args, **kwargs):
         return []
     
     def on_sentGCodeHook(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
         if not self._isInitialized:
             return
-        
+        # Aquí puedes manejar el código G según sea necesario.
         pass
     
     def on_event(self, event, payload):
-        self._logger.info(f"Handling event : {event}")    
-        self._logger.info(payload)    
+        
+        self._logger.info(f"Handling event: {event}")
+        self._logger.info(payload)
 
         if event == Events.CLIENT_OPENED:
-            if self.config["plugin_dependency_check"]:
+            if self.config_manager._get_plugin_dependency_check():
                 self.plugin_Checker._checkAndLoadThirdPartyPluginInfos()
-        
+
         elif event == Events.PRINT_STARTED:
             self.event_handler._handle_print_started(payload)
 
@@ -98,30 +111,29 @@ class ExternalPrintHistoryPlugin(
         
         elif event == Events.METADATA_ANALYSIS_FINISHED:
             self.event_handler._handle_metadata_analysis_finished(payload)
-            
+    
     ###################################################################
     ##################### API ROUTES ##################################
     ###################################################################
     @octoprint.plugin.BlueprintPlugin.route("/testdbconnection", methods=["PUT"])
     def test_db_connection(self):
-        #self._logger.info("testdbconnection" + str(request.json))
-        response = self.database_manager._set_and_test_connection(request.json)                
+        # self._logger.info("testdbconnection" + str(request.json))
+        try:
+            response = self.database_manager._test_connection(request.json)
+            # Save data
+        except Exception as e:
+            self._logger.error(f"Database connection test failed: {str(e)}")
+            response = {"error": True, "message": "Failed to test database connection"}
+        
         return flask.jsonify(response)
 
     @octoprint.plugin.BlueprintPlugin.route("/selectPrinter", methods=["PUT"])
     def select_printer_config(self):
         data = request.json
-        #self._logger.info("selectPrinter: " + str(data))
+        # self._logger.info("selectPrinter: " + str(data))
         try:  
-            response = self.database_manager._set_and_test_connection(data)
-            if not response.get("error", True):
-                response = self.database_manager._select_Printer(data.get("printer_id", 0))
-                printer_data = getattr(response, 'printer_data', None)
-                if printer_data is not None:
-                    self.printer_data.update(printer_data)
-                    self.printer_data.pop("printer_id")
-            #self._logger.info("response: " + str(response))
-            
+            response = self.database_manager._select_Printer(self.config_manager._get_printer_id())
+            # self._logger.info("response: " + str(response))
         except Exception as e:
             self._logger.error(f"Error select printer config: {str(e)}")
             response = {"error": True, "message": str(e)}
@@ -130,14 +142,13 @@ class ExternalPrintHistoryPlugin(
 
     @octoprint.plugin.BlueprintPlugin.route("/deactivatePluginCheck", methods=["PUT"])
     def deactivatePluginCheck(self):
-            #self.config["plugin_dependency_check"] = False
-            #self._settings.set(['plugin_dependency_check'], False)
-            #self._settings.save()
-            self.config["plugin_dependency_check"] = False
-            self.config_manager._update_config(self.config)
-            
-            response = {"error": False, "message": "Plugin check deactivated"}
-            return flask.jsonify(response)
+        response = {"error": False, "message": "Plugin check deactivated"}
+        octoprint.plugin.SettingsPlugin.on_settings_save(self, {SettingsKeys.PLUGIN_DEPENDENCY_CHECK: False})
+        return flask.jsonify(response)
+    
+    def is_blueprint_csrf_protected(self):
+        return True
+    
     def get_template_configs(self):
         return [
             dict(type="settings", name="External Print History", custom_bindings=True, template="ExternalPrintHistory_settings.jinja2"),
