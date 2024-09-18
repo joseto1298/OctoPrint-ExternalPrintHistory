@@ -20,27 +20,22 @@ class ConfigurationManager():
         
     def _load_config(self):
         config = {}
-        config[SettingsKeys.PRINTER_ID] = self.plugin._settings.get([SettingsKeys.PRINTER_ID]) or 0
-        config[SettingsKeys.CURRENCY] = self.plugin._settings.get([SettingsKeys.CURRENCY]) or "\u20ac"
-        config[SettingsKeys.ELECTRICITY_COST] = self.plugin._settings.get([SettingsKeys.ELECTRICITY_COST]) or 0.0
-        config[SettingsKeys.DB_HOST] = self.plugin._settings.get([SettingsKeys.DB_HOST]) or ''
-        config[SettingsKeys.DB_USER] = self.plugin._settings.get([SettingsKeys.DB_USER]) or ''
-        config[SettingsKeys.DB_PASSWORD] = self.plugin._settings.get([SettingsKeys.DB_PASSWORD]) or ''
-        config[SettingsKeys.DB_DATABASE] = self.plugin._settings.get([SettingsKeys.DB_DATABASE]) or ''
-        config[SettingsKeys.DB_PORT] = self.plugin._settings.get([SettingsKeys.DB_PORT]) or 3306
-        config[SettingsKeys.PLUGIN_DEPENDENCY_CHECK] = self.plugin._settings.get([SettingsKeys.PLUGIN_DEPENDENCY_CHECK])
+        config[SettingsKeys.PRINTER_ID] = self.plugin._settings.get([SettingsKeys.PRINTER_ID])
+        config[SettingsKeys.CURRENCY] = self.plugin._settings.get([SettingsKeys.CURRENCY])
+        config[SettingsKeys.ELECTRICITY_COST] = self.plugin._settings.get([SettingsKeys.ELECTRICITY_COST])
+        config[SettingsKeys.DB_HOST] = self.plugin._settings.get([SettingsKeys.DB_HOST])
+        config[SettingsKeys.DB_USER] = self.plugin._settings.get([SettingsKeys.DB_USER])
+        config[SettingsKeys.DB_PASSWORD] = self.plugin._settings.get([SettingsKeys.DB_PASSWORD])
+        config[SettingsKeys.DB_DATABASE] = self.plugin._settings.get([SettingsKeys.DB_DATABASE])
+        config[SettingsKeys.DB_PORT] = self.plugin._settings.get([SettingsKeys.DB_PORT])
+        config[SettingsKeys.PLUGIN_DEPENDENCY_CHECK] = self.plugin._settings.get_boolean([SettingsKeys.PLUGIN_DEPENDENCY_CHECK])
         
         if config[SettingsKeys.DB_PASSWORD] != '':
             config[SettingsKeys.DB_PASSWORD] = self._decrypt(config[SettingsKeys.DB_PASSWORD])
-        
-        if config[SettingsKeys.PLUGIN_DEPENDENCY_CHECK] is None:
-            config[SettingsKeys.PLUGIN_DEPENDENCY_CHECK] = True
-        
+                
         return config
 
     def _get_plugin_dependency_check(self):
-        if self.plugin._settings.get([SettingsKeys.PLUGIN_DEPENDENCY_CHECK]) == None:
-            return True
         return self.plugin._settings.get_boolean([SettingsKeys.PLUGIN_DEPENDENCY_CHECK])
 
     def _get_printer_id(self):

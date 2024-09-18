@@ -44,10 +44,26 @@ class ExternalPrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def on_shutdown(self):
         self._logger.info("Shutting down ExternalPrintHistory plugin")
         
-    #def get_settings_defaults(self):
+    def get_settings_defaults(self):
+        settings = {
+            SettingsKeys.PLUGIN_DEPENDENCY_CHECK: True,
+            SettingsKeys.PRINTER_ID: 0,
+            SettingsKeys.DB_USER: "",
+            SettingsKeys.DB_PASSWORD: "",
+            SettingsKeys.DB_HOST: "",
+            SettingsKeys.DB_DATABASE: "",            
+            SettingsKeys.DB_PORT: 3306,
+            SettingsKeys.CURRENCY: "\u20ac",
+            SettingsKeys.ELECTRICITY_COST: 0.0
+        }
 
-    def on_settings_load(self):        
-        return self.config_manager._load_config()
+        return settings
+    
+    def on_settings_load(self):  
+        settings = self.config_manager._load_config()
+        self.database_manager._set_and_test_connection(settings)
+        
+        return settings
     
     def on_settings_save(self, data):
         result = {"error": False}       
@@ -90,8 +106,8 @@ class ExternalPrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     
     def on_event(self, event, payload):
         
-        self._logger.info(f"Handling event: {event}")
-        self._logger.info(payload)
+        #self._logger.info(f"Handling event: {event}")
+        #self._logger.info(payload)
 
         if event == Events.CLIENT_OPENED:
             if self.config_manager._get_plugin_dependency_check():
@@ -143,7 +159,7 @@ class ExternalPrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     @octoprint.plugin.BlueprintPlugin.route("/deactivatePluginCheck", methods=["PUT"])
     def deactivatePluginCheck(self):
         response = {"error": False, "message": "Plugin check deactivated"}
-        octoprint.plugin.SettingsPlugin.on_settings_save(self, {SettingsKeys.PLUGIN_DEPENDENCY_CHECK: False})
+        self._settings.set([SettingsKeys.PLUGIN_DEPENDENCY_CHECK], False)
         return flask.jsonify(response)
     
     def is_blueprint_csrf_protected(self):
@@ -163,9 +179,13 @@ class ExternalPrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 "js/ExternalPrintHistory_settings.js",
                 "js/ExternalPrintHistory.js",           
                 ],
-            css = ["css/ExternalPrintHistory.css"]
+            css = [
+                "css/ExternalPrintHistory.css"
+                ]
         )
     
+    #def on_settings_migrate(self, target, current=None):
+
     def get_version(self):
         return self._plugin_version      
 

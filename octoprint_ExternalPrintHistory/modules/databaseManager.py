@@ -99,38 +99,43 @@ class DatabaseManager():
 
         try:
             connection = self.get_connection()
-            with connection.cursor() as cursor:
-                if printer_id:
-                    query = """
-                        SELECT printer_id FROM Printer WHERE printer_id = %s
-                    """
-                    cursor.execute(query, (printer_id,))
-                    if cursor.fetchone():
-                        update_fields = []
-                        params = []
+            if connection:
+                with connection.cursor() as cursor:
+                    if printer_id:
+                        query = """
+                            SELECT printer_id FROM Printer WHERE printer_id = %s
+                        """
+                        cursor.execute(query, (printer_id,))
+                        if cursor.fetchone():
+                            update_fields = []
+                            params = []
 
-                        for field in ["printer_brand", "printer_model", "printer_name", "printer_power_consumption", 
-                                    "printer_purchase_price", "printer_estimated_lifespan", "printer_maintenance_costs"]:
-                            if field in printer_data:
-                                db_field = field.replace("printer_", "")
-                                update_fields.append(f"{db_field} = %s")
-                                params.append(printer_data[field])
+                            for field in ["printer_brand", "printer_model", "printer_name", "printer_power_consumption", 
+                                        "printer_purchase_price", "printer_estimated_lifespan", "printer_maintenance_costs"]:
+                                if field in printer_data:
+                                    db_field = field.replace("printer_", "")
+                                    update_fields.append(f"{db_field} = %s")
+                                    params.append(printer_data[field])
 
-                        if update_fields:
-                            update_query = f"""
-                                UPDATE Printer
-                                SET {', '.join(update_fields)}
-                                WHERE printer_id = %s
-                            """
-                            params.append(printer_id)
-                            cursor.execute(update_query, params)
-                            result.update({"update": True})
+                            if update_fields:
+                                update_query = f"""
+                                    UPDATE Printer
+                                    SET {', '.join(update_fields)}
+                                    WHERE printer_id = %s
+                                """
+                                params.append(printer_id)
+                                cursor.execute(update_query, params)
+                                result.update({"update": True})
+                        else:
+                            result = self._insert_printer(cursor, printer_data)
                     else:
                         result = self._insert_printer(cursor, printer_data)
-                else:
-                    result = self._insert_printer(cursor, printer_data)
-                
-                connection.commit()
+                    
+                    connection.commit()
+            else:
+                result.update({"message": "The connection to the database is not configured"})
+                self._logger.error("The connection to the database is not configured")
+                        
         except MySQLError as e:
             connection.rollback()
             result.update({"error": True, "message": str(e)})
@@ -183,33 +188,37 @@ class DatabaseManager():
         
         try:
             connection = self.get_connection()
-            with connection.cursor() as cursor:
-                query = """
-                    SELECT printer_id, brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs
-                    FROM Printer
-                    WHERE printer_id = %s
-                """
-                cursor.execute(query, (printer_id,))
-                row = cursor.fetchone()
-                
-                if row:
-                    printer_data = {
-                        "printer_id": row[0],
-                        "brand": row[1],
-                        "model": row[2],
-                        "name": row[3],
-                        "power_consumption": row[4],
-                        "purchase_price": row[5],
-                        "estimated_lifespan": row[6],
-                        "maintenance_costs": row[7],
-                    }
-                    result = {"error": False, "printer_data": printer_data}
-                    #self._logger.info(f"Fetched Printer record with ID {printer_id}: {printer_data}")
-                else:
-                    result = {"error": False, "message": "Printer data not found"}
-                    #self._logger.info(result["message"])
-                
-            connection.commit()
+            if connection:
+                with connection.cursor() as cursor:
+                    query = """
+                        SELECT printer_id, brand, model, name, power_consumption, purchase_price, estimated_lifespan, maintenance_costs
+                        FROM Printer
+                        WHERE printer_id = %s
+                    """
+                    cursor.execute(query, (printer_id,))
+                    row = cursor.fetchone()
+                    
+                    if row:
+                        printer_data = {
+                            "printer_id": row[0],
+                            "brand": row[1],
+                            "model": row[2],
+                            "name": row[3],
+                            "power_consumption": row[4],
+                            "purchase_price": row[5],
+                            "estimated_lifespan": row[6],
+                            "maintenance_costs": row[7],
+                        }
+                        result = {"error": False, "printer_data": printer_data}
+                        #self._logger.info(f"Fetched Printer record with ID {printer_id}: {printer_data}")
+                    else:
+                        result = {"error": False, "message": "Printer data not found"}
+                        #self._logger.info(result["message"])
+                    
+                connection.commit()
+            else:
+                result.update({"message": "The connection to the database is not configured"})
+                self._logger.error("The connection to the database is not configured")
         except MySQLError as e:
             connection.rollback()
             result.update({"message": str(e)})
