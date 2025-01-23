@@ -1,26 +1,30 @@
 <h2>External Print History Settings</h2>
 <div id="ExternalPrintHistory-settings">
 
-    <!-- Barra de navegación con pestañas -->
+    <!-- Tabbed navigation bar -->
     <ul class="nav nav-tabs" id="ExternalPrintHistoryTabs">
         <li class="nav-item">
             <a class="nav-link active" href="#databaseSettings" id="databaseSettingsTab" data-toggle="tab">Database</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="#printerData" id="printerDataTab" data-toggle="tab">Printer</a>
+            <a class="nav-link" href="#printerData" id="printerDataTab" data-toggle="tab"
+                data-bind="event: { click: selectPrinter }">Printer</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="#electricityCosts" data-toggle="tab">Electricity</a>
+            <a class="nav-link" href="#electricityCosts" data-toggle="tab">Electricity</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="#notifications" data-toggle="tab">Notifications</a>
+            <a class="nav-link" href="#notifications" data-toggle="tab">Notifications</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="#appearance" data-toggle="tab">Appearance</a>
+            <a class="nav-link" href="#appearance" data-toggle="tab">Appearance</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#Spoolman" data-toggle="tab">Spoolman</a>
         </li>
     </ul>
 
-    <!-- Contenido de las pestañas -->
+    <!-- Tab content -->
     <div class="tab-content">
         <!-- Database Settings -->
         <form class="tab-pane form-horizontal active" id="databaseSettings">
@@ -30,7 +34,7 @@
                 <div class="controls">
                     <div class="input-append">
                         <input type="text" class="input-large" minlength="1" maxlength="50" id="db_user" required
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_user">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_user, disable: db_readonly">
                     </div>
                 </div>
             </div>
@@ -41,7 +45,7 @@
                     <div class="input-append">
                         <input type="password" class="input-large" minlength="1" maxlength="50" id="db_password"
                             required
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_password">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_password, disable: db_readonly">
                     </div>
                 </div>
             </div>
@@ -51,7 +55,17 @@
                 <div class="controls">
                     <div class="input-append">
                         <input type="text" class="input-large" minlength="1" maxlength="50" id="db_host" required
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_host">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_host, disable: db_readonly">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">{{ _('Database') }}</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="text" class="input-large" minlength="1" maxlength="50" id="db_database" required
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_database, disable: db_readonly">
                     </div>
                 </div>
             </div>
@@ -62,26 +76,18 @@
                     <div class="input-append">
                         <input type="number" class="input-large" min="1" max="65535" step="1" required
                             oninput="this.value = this.value.slice(0, 5);" id="db_port"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_port">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">{{ _('Database') }}</label>
-                <div class="controls">
-                    <div class="input-append">
-                        <input type="text" class="input-large" minlength="1" maxlength="50" id="db_database" required
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_database">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.db_port, disable: db_readonly">
                     </div>
                 </div>
             </div>
 
             <div class="control-group">
                 <div class="controls ">
-                    <button type="submit" id="test_connection" class="btn btn-primary">{{ _('Test
+                    <button type="submit" id="test_connection" class="btn btn-primary"
+                        data-bind="click: testDbConnection, disable: db_isloading">{{
+                        _('Test
                         Connection')}}</button>
-                    <i id="spinner_test_connection" class="fa fa-spinner hidden" aria-hidden="true"></i>
+                    <i id="spinner_test_connection" class="fa fa-spinner" data-bind="visible: db_isloading"></i>
                 </div>
             </div>
 
@@ -90,6 +96,7 @@
                     <span id="connection_Status" data-bind="text: connection_Status"></span>
                 </div>
             </div>
+
         </form>
 
         <!-- Printer Data -->
@@ -97,17 +104,17 @@
             <h3>Printer data</h3>
             <h5>Before configure and test the database connection.</h5>
             <br>
+
             <div class="control-group">
                 <div class="controls">
-                    <button id="data_Printer" class="btn btn-primary">{{ _('Load Printer Data, Unlocked
-                        Fields')}}</button>
-                    <i id="spinner_printer_data" class="fa fa-spinner hidden" aria-hidden="true"></i>
+                    <i id="spinner_printer_data" class="fa fa-spinner" aria-hidden="true"
+                        data-bind="visible: data_isloading"></i>
                 </div>
             </div>
 
             <div class="control-group">
                 <div class="controls">
-                    <span id="printerStatus" data-bind="text: printerStatus"></span>
+                    <span id="printer_status" data-bind="text: data_status"></span>
                 </div>
 
             </div>
@@ -117,9 +124,9 @@
                 <label class="control-label">{{ _('Power consumption') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="number" class="input-medium" readonly step="0.01" min="0" max="9999" value="0.00"
+                        <input type="number" class="input-medium" step="0.01" min="0" max="9999" value="0.00"
                             oninput="this.value = this.value.slice(0, 7);" id="printer_power_consumption"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_power_consumption">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_power_consumption, disable: data_readonly">
                         <span class="add-on">kW</span>
                     </div>
                 </div>
@@ -133,9 +140,9 @@
                 <label class="control-label">{{ _('Purchase price') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="number" class="input-medium" readonly step="0.01" min="0" max="99999" value="0.00"
+                        <input type="number" class="input-medium" step="0.01" min="0" max="99999" value="0.00"
                             oninput="this.value = this.value.slice(0, 8);" id="printer_purchase_price"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_purchase_price">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_purchase_price, disable: data_readonly">
                         <span class="add-on"><span
                                 data-bind="text: settingsViewModel.settings.plugins.ExternalPrintHistory.currency"></span>
                     </div>
@@ -146,9 +153,9 @@
                 <label class="control-label">{{ _('Estimated lifespan') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="number" class="input-medium" readonly step="0.01" min="0" max="99999" value="0.00"
+                        <input type="number" class="input-medium" step="0.01" min="0" max="99999" value="0.00"
                             oninput="this.value = this.value.slice(0, 9);" id="printer_estimated_lifespan"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_estimated_lifespan">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_estimated_lifespan, disable: data_readonly">
                         <span class="add-on">h</span>
                     </div>
                 </div>
@@ -158,9 +165,9 @@
                 <label class="control-label">{{ _('Maintenance costs') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="number" class="input-medium" readonly step="0.01" min="0" max="99999" value="0.00"
+                        <input type="number" class="input-medium" step="0.01" min="0" max="99999" value="0.00"
                             oninput="this.value = this.value.slice(0, 8);" id="printer_maintenance_costs"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_maintenance_costs">
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_maintenance_costs, disable: data_readonly">
                         <span class="add-on"><span
                                 data-bind="text: settingsViewModel.settings.plugins.ExternalPrintHistory.currency"></span>/h</span>
                     </div>
@@ -175,8 +182,8 @@
                 <label class="control-label">{{ _('Name') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_name"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_name">
+                        <input type="text" class="input-large" minlength="1" maxlength="50" id="printer_name"
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_name, disable: data_readonly">
                     </div>
                 </div>
             </div>
@@ -184,8 +191,8 @@
                 <label class="control-label">{{ _('Model') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_model"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_model">
+                        <input type="text" class="input-large" minlength="1" maxlength="50" id="printer_model"
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_model, disable: data_readonly">
                     </div>
                 </div>
             </div>
@@ -194,8 +201,8 @@
                 <label class="control-label">{{ _('Brand') }}</label>
                 <div class="controls">
                     <div class="input-append">
-                        <input type="text" class="input-large" readonly minlength="1" maxlength="50" id="printer_brand"
-                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_brand">
+                        <input type="text" class="input-large" minlength="1" maxlength="50" id="printer_brand"
+                            data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.printer_brand, disable: data_readonly">
                     </div>
                 </div>
             </div>
@@ -221,12 +228,12 @@
         <!-- Notifications -->
         <form class="tab-pane" id="notifications">
             <h3>Notification of additional plugins</h3>
-            <div class="form-check">
+            <div class="form-check-horizontal  notification-plugins">
+                <label class="control-label">
+                    Activate Plugin dependency check
+                </label>
                 <input class="form-check-input" type="checkbox" id="plugin_dependency_check"
                     data-bind="checked: settingsViewModel.settings.plugins.ExternalPrintHistory.plugin_dependency_check">
-                <label class="form-check-label">
-                    {{ _('Activate Plugin dependency check') }}
-                </label>
             </div>
         </form>
 
@@ -240,6 +247,54 @@
                         <input type="text" class="input-mini" minlength="1" maxlength="2" id="currency"
                             oninput="this.value = this.value.trim();"
                             data-bind="value: settingsViewModel.settings.plugins.ExternalPrintHistory.currency">
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Spoolman -->
+        <form class="tab-pane form-horizontal" id="Spoolman">
+            <h3>Spoolman</h3>
+
+            <div class="control-group">
+                <label class="control-label">{{ _('Spoolman instance URL') }}</label>
+                <div class="controls">
+                    <input id="spoolmanUrl" type="text" class="input-large text-left"
+                        data-bind="textInput: settingsViewModel.settings.plugins.ExternalPrintHistory.spoolman_url">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="isSpoolmanCertVerifyEnabled">
+                        Verify SSL certificate (if applicable)
+                    </label>
+                    <div class="controls">
+                        <div>
+                            <input id="SpoolmanCertVerifyEnabled" type="checkbox" class="text-left"
+                                data-bind="checked: settingsViewModel.settings.plugins.ExternalPrintHistory.spoolman_cert_verify_enabled">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="spoolmanCertPemPath">
+                        SSL certificate <code>.pem</code> path
+                    </label>
+                    <div class="controls">
+                        <div>
+                            <input id="spoolmanCertPemPath" type="text" class="input-xlarge text-left"
+                                data-bind="textInput: settingsViewModel.settings.plugins.ExternalPrintHistory.spoolman_cert_pem_path">
+                        </div>
+                        <div>
+                            <small>
+                                In case your Spoolman instance is using an SSL certificate which is unavailable
+                                to your Octoprint
+                                instance (eg. self-signed certificate), you can provide a path to custom
+                                certificate chain file. This
+                                allows the plugin to establish secure connection without disabling certificate
+                                verification. The file
+                                must be located on Octoprint's machine, and should be readable for Octoprint.
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>

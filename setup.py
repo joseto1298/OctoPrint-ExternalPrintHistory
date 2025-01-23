@@ -19,7 +19,7 @@ plugin_version = "0.0.2"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """TODO"""
+plugin_description = "Plugin integrating OctoPrint with External Print History Plugin."
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "joseto1298"
@@ -38,7 +38,7 @@ plugin_requires = [
     "pymysql",           
     "flask",            
     "requests",          
-    "semantic_version"
+    "semantic_version",
     ]
 
 ### --------------------------------------------------------------------------------------------------------------------
@@ -68,7 +68,10 @@ plugin_ignored_packages = []
 # "python_requires": ">=3,<4" blocks installation on Python 2 systems, to prevent confused users and provide a helpful error. 
 # Remove it if you would like to support Python 2 as well as 3 (not recommended).
 additional_setup_parameters = {
-    "python_requires": ">=3,<4"
+    "python_requires": ">=3,<4",
+        "dependency_links": [
+        "https://github.com/joseto1298/octoprint-spoolman/archive/master.zip#egg=octoprint-spoolman"
+    ]
 }
 
 

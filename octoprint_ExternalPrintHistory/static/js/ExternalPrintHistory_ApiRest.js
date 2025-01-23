@@ -1,20 +1,38 @@
+/**
+ * ExternalPrintHistoryApiRest class
+ *
+ * This class is used to interact with the OctoPrint server
+ * and the ExternalPrintHistory plugin
+ */
 function ExternalPrintHistoryApiRest() {
+    /**
+     * The base URL for the OctoPrint server
+     * @type {string}
+     */
     var urlApi = BASEURL + "plugin/ExternalPrintHistory";
-    self = this;
 
     /**
-     * Sends a PUT request to deactivate the plugin check.
+     * The instance of the ExternalPrintHistoryApiRest class
+     * @type {ExternalPrintHistoryApiRest}
+     */
+    var self = this;
+
+    /**
+     * Deactivate plugin check
      *
-     * @param {object} data - The data to be sent in the request body.
-     * @return {void} This function does not return anything.
+     * Send a PUT request to the OctoPrint server to deactivate the plugin check
+     *
+     * @param {object} [data] The data to send with the request
      */
     this.callDeactivatePluginCheck = function (data) {
         $.ajax({
             url: urlApi + "/deactivatePluginCheck",
             type: "PUT",
             contentType: "application/json",
+            data: data,
             success: function (response) {},
             error: function (xhr) {
+                var errorMessage = "";
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 } else if (xhr.responseText) {
@@ -28,23 +46,26 @@ function ExternalPrintHistoryApiRest() {
     };
 
     /**
-     * Tests the database connection by sending a PUT request to the /testdbconnection endpoint.
+     * Test database connection
      *
-     * @param {object} data - The data to be sent in the request body.
-     * @return {Promise} A promise that resolves with the response data or rejects with an error message.
-     */
+     * Send a PUT request to the OctoPrint server to test the database connection
+     *
+     * @param {object} data The data to send with the request
+     * @returns {Promise} A promise that is resolved if the request is successful or rejected if the request fails
+     *
     self.testDbConnection = function (data) {
         //console.table(data);
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: urlApi + "/testdbconnection",
-                type: "PUT",
+                type: "",
                 contentType: "application/json",
                 data: JSON.stringify(data),
                 success: function (response) {
                     resolve(response);
                 },
                 error: function (xhr) {
+                    var errorMessage = "";
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
                     } else if (xhr.responseText) {
@@ -58,7 +79,16 @@ function ExternalPrintHistoryApiRest() {
             });
         });
     };
+    */
 
+    /**
+     * Select printer
+     *
+     * Send a PUT request to the OctoPrint server to select the printer
+     *
+     * @param {object} data The data to send with the request
+     * @returns {Promise} A promise that is resolved if the request is successful or rejected if the request fails
+     *
     self.selectPrinter = function (data) {
         //console.table(data);
         return new Promise((resolve, reject) => {
@@ -72,6 +102,7 @@ function ExternalPrintHistoryApiRest() {
                     resolve(response);
                 },
                 error: function (xhr) {
+                    var errorMessage = "";
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
                     } else if (xhr.responseText) {
@@ -85,4 +116,5 @@ function ExternalPrintHistoryApiRest() {
             });
         });
     };
+    */
 }

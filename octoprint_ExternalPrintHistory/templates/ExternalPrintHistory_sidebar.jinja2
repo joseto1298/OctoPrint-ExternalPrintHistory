@@ -1,0 +1,62 @@
+<div id="ExternalPrintHistory-sidebar">
+
+    <div class="selectedSpools" id="selectedSpools" data-bind="visible: !spoolmanError() && !isloading()">
+        <!-- ko foreach: spools -->
+        <div>
+            <div class="tool-spool">
+                <b data-bind="text: 'Tool ' + (tool || 'Unknown')"></b>
+            </div>
+            <div class="color-preview-spool">
+                <span data-bind="style: { backgroundColor: color || 'white' }"></span>
+            </div>
+            <div class="spool-label-spool">
+                <!-- ko if: material -->
+                <span data-bind="text: material + ' - ' + displayName + ' (' + vendor + ') - ' + remainingWeight + 'g'"></span>
+                <!-- /ko -->
+                <!-- ko ifnot: material -->
+                <!-- ko if: notFound -->
+                <span>Spool not found</span>
+                <!-- /ko -->
+                <!-- ko ifnot: notFound -->
+                <span>No spool selected</span>
+                <!-- /ko -->
+                <!-- /ko -->
+            </div>
+            <div class="button-spool">
+                <!-- ko if: material -->
+                <button class="btn btn-mini" data-bind="click: $parent.deselectSpool">
+                    <i class="icon-remove"></i>
+                </button>
+                <!-- /ko -->
+                <button class="btn btn-mini" data-bind="click: $parent.changeSpool">...</button>
+            </div>
+        </div>
+        <!-- /ko -->
+    </div>
+
+    <div data-bind="visible: isloading" class="spinner_selectedSpools">
+        <i class="fa fa-2xl fa-spinner fa-spin" aria-hidden="true"></i>
+    </div>
+
+    <div class="alert alert-block alert-error margin-bottom-mini" data-bind="visible: spoolmanError">
+        <p>
+            <i class="fa fa-exclamation-triangle"></i>
+            <strong>Could not connect to Spoolman</strong>
+        </p>
+    </div>
+
+    <div class="tool-list-controls">
+        <br>
+        <button class="btn btn-mini btn-default" data-bind="click: refreshTools, disable: isloading">
+            <i class="fa fa-sm fa-refresh"></i>
+            Refresh
+        </button>
+
+        <a class="btn btn-mini btn-default" target="_blank" data-bind="attr: { href: spoolmanUrl }"
+            title="Open Spoolman in new tab">
+            <i class="fa fa-sm fa-database"></i>
+            Open Spoolman
+        </a>
+    </div>
+
+</div>

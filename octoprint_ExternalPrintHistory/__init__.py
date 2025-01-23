@@ -1,4 +1,3 @@
-# coding=utf-8
 from __future__ import absolute_import
 
 from .ExternalPrintHistory import ExternalPrintHistoryPlugin
@@ -16,5 +15,5 @@ def __plugin_load__():
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook,
-        "octoprint.events.register_custom_events": __plugin_implementation__.register_custom_events,
+        #"octoprint.events.register_custom_events": __plugin_implementation__.register_custom_events,
     }

@@ -20,3 +20,12 @@ class SettingsKeys:
     CURRENCY = "currency"
     ELECTRICITY_COST = "electricity_cost"
 
+    # Spoolman
+    SPOOLMAN_URL = "spoolman_url"
+    SPOOLMAN_CERT_VERIFY_ENABLED = "spoolman_cert_verify_enabled"
+    SPOOLMAN_CERT_PEM_PATH = "spoolman_cert_pem_path"
+    SELECTED_SPOOL_IDS = "selected_spool_ids"
+    
+    # Print status
+    print_status = {}
+    

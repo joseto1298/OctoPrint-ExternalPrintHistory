@@ -1,6 +1,16 @@
-#spinner_test_connection,
-#spinner_printer_data {
+#spinner_test_connection {
   margin-left: 10px;
+  animation: spin 1s linear infinite;
+}
+
+#spinner_printer_data {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+.spinner_selectedSpools {
+  text-align: center;
+  margin-top: 20px;
   animation: spin 1s linear infinite;
 }
 
@@ -20,4 +30,62 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+#db_port {
+  text-align: left;
+}
+
+.notification-plugins {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+input#plugin_dependency_check {
+  margin-right: 15px;
+}
+
+/*
+*/
+
+.selectedSpools > div {
+  display: flex;
+  min-height: 1.8em;
+  margin-top: 5px;
+}
+
+.tool-spool {
+  flex: 0 0 15%;
+}
+
+.color-preview-spool {
+  flex: 0 0 5%;
+}
+
+.color-preview-spool span {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 20%;
+  margin-right: 2px;
+  margin-left: 2px;
+  vertical-align: middle;
+  border: 1px solid black;
+}
+
+.spool-label-spool {
+  flex: 0 0 60%;
+}
+
+.button-spool {
+  flex: 0 0 20%;
+}
+
+.tool-list-controls {
+  text-align: left;
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
 }

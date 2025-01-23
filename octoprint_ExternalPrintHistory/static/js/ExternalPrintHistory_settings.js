@@ -1,70 +1,99 @@
 $(function () {
     function ExternalPrintHistorySettings(parameters) {
         var self = this;
-        self.api = new ExternalPrintHistoryApiRest();
+        var apiUrl = BASEURL + "plugin/ExternalPrintHistory";
+
         self.settingsViewModel = parameters[0];
 
-        self.printerStatus = ko.observable("");
         self.connection_Status = ko.observable("");
+        self.db_readonly = ko.observable(false);
+        self.db_isloading = ko.observable(false);
+
+        self.data_status = ko.observable("");
+        self.data_readonly = ko.observable(true);
+        self.data_isloading = ko.observable(false);
+
+        self.clearConnectionStatusTimer = null;
+        self.clearDataStatusTimer = null;
 
         self.testDbConnection = function () {
-            const settings = {
-                db_user: $("#db_user").val(),
-                db_password: $("#db_password").val(),
-                db_host: $("#db_host").val(),
-                db_port: $("#db_port").val(),
-                db_database: $("#db_database").val(),
-            };
+            self.connection_Status("");
+
+            const db_user = $("#db_user").val();
+            const db_password = $("#db_password").val();
+            const db_host = $("#db_host").val();
+            const db_port = $("#db_port").val();
+            const db_database = $("#db_database").val();
 
             if (
-                !settings.db_user ||
-                !settings.db_password ||
-                !settings.db_host ||
-                !settings.db_port ||
-                !settings.db_database
+                !db_user ||
+                !db_password ||
+                !db_host ||
+                !db_port ||
+                !db_database
             ) {
-                $("#connection_Status").text("All fields are required");
+                self.connection_Status("All fields are required");
                 return;
             }
-            self.statusInputDatabase(true);
-            self.toggleSpinner("spinner_test_connection", true);
-            $("#test_connection").prop("disabled", true);
-            self.api
-                .testDbConnection(settings)
-                .then((response) => {
-                    //console.log(response);
+
+            const settings = {
+                db_user: db_user,
+                db_password: db_password,
+                db_host: db_host,
+                db_port: db_port,
+                db_database: db_database,
+            };
+
+            self.db_readonly(true);
+            self.db_isloading(true);
+
+            $.ajax({
+                url: apiUrl + "/testdbconnection",
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(settings),
+            })
+                .done(function (response) {
                     if (response.error == false) {
-                        $("#connection_Status").text("Connection successful");
+                        self.connection_Status(
+                            "Connection successful - Database settings saved."
+                        );
                     } else {
-                        $("#connection_Status").text(
+                        self.connection_Status(
                             "Connection failed: " + response.message
                         );
                     }
                 })
-                .catch((error) => {
-                    $("#connection_Status").text("Connection failed: " + error);
+                .fail(function (xhr) {
+                    var errorMessage = "";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        errorMessage = xhr.responseText;
+                    }
+                    self.connection_Status("Connection failed");
+                    console.error(errorMessage);
                 })
-                .finally(() => {
-                    $("#test_connection").prop("disabled", false);
-                    self.statusInputDatabase(false);
-                    self.toggleSpinner("spinner_test_connection", false);
+                .always(function () {
+                    self.db_readonly(false);
+                    self.db_isloading(false);
+                    self.startClearConnectionStatusTimer();
                 });
         };
 
         self.selectPrinter = function () {
-            self.statusInputPrinter(true);
-            self.toggleSpinner("spinner_printer_data", true);
-            $("#data_Printer").prop("disabled", true);
-            self.api
-                .selectPrinter({})
-                .then((response) => {
-                    //console.log(response);
+            self.data_isloading(true);
+            self.data_readonly(true);
+            self.data_status("");
+
+            $.ajax({
+                url: apiUrl + "/selectPrinter",
+                type: "GET",
+                contentType: "application/json",
+            })
+                .done(function (response) {
                     if (response.error == false) {
-                        self.statusInputPrinter(false);
                         if (response.printer_data) {
-                            $("#printerStatus").text(
-                                "Data loaded successfully"
-                            );
                             $("#printer_name").val(response.printer_data.name);
                             $("#printer_model").val(
                                 response.printer_data.model
@@ -84,62 +113,50 @@ $(function () {
                             $("#printer_maintenance_costs").val(
                                 response.printer_data.maintenance_costs
                             );
+                            self.data_status("Data loaded successfully");
+                            self.data_readonly(false);
                         } else {
-                            $("#printerStatus").text("Printer data  not found");
+                            self.data_status("Printer data not found");
+                            self.data_readonly(true);
                         }
-                        $("#data_Printer").prop("disabled", false);
                     } else {
-                        $("#printerStatus").text(
-                            "Connection failed: " + response.message
-                        );
+                        self.data_status("Connection failed");
+                        console.error(response.message);
                     }
                 })
-                .catch((error) => {
-                    $("#printerStatus").text("Connection failed: " + error);
+                .fail(function (xhr) {
+                    var errorMessage = "";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        errorMessage = xhr.responseText;
+                    }
+                    self.data_status("Connection failed");
+                    console.error(errorMessage);
                 })
-                .finally(() => {
-                    $("#data_Printer").prop("disabled", false);
-                    self.toggleSpinner("spinner_printer_data", false);
+                .always(function () {
+                    self.data_isloading(false);
+                    self.startClearDataStatusTimer();
                 });
         };
 
-        self.statusInputDatabase = function (status) {
-            $("#db_user").prop("readonly", status);
-            $("#db_password").prop("readonly", status);
-            $("#db_host").prop("readonly", status);
-            $("#db_port").prop("readonly", status);
-            $("#db_database").prop("readonly", status);
-        };
-
-        self.statusInputPrinter = function (status) {
-            $("#printer_name").prop("readonly", status);
-            $("#printer_model").prop("readonly", status);
-            $("#printer_brand").prop("readonly", status);
-            $("#printer_power_consumption").prop("readonly", status);
-            $("#printer_purchase_price").prop("readonly", status);
-            $("#printer_estimated_lifespan").prop("readonly", status);
-            $("#printer_maintenance_costs").prop("readonly", status);
-        };
-
-        self.toggleSpinner = function (spinnerId, show) {
-            if (show) {
-                $("#" + spinnerId).removeClass("hidden");
-            } else {
-                $("#" + spinnerId).addClass("hidden");
+        self.startClearConnectionStatusTimer = function () {
+            if (self.clearConnectionStatusTimer) {
+                clearTimeout(self.clearConnectionStatusTimer);
             }
+            self.clearConnectionStatusTimer = setTimeout(function () {
+                self.connection_Status("");
+            }, 8000);
         };
 
-        $("#databaseSettingsTab").on("blur", function () {
-            $("#connection_Status").text("");
-        });
-
-        $("#printerDataTab").on("blur", function () {
-            $("#printerStatus").text("");
-            self.statusInputPrinter(true);
-        });
-
-        $("#data_Printer").click(self.selectPrinter);
-        $("#test_connection").click(self.testDbConnection);
+        self.startClearDataStatusTimer = function () {
+            if (self.clearDataStatusTimer) {
+                clearTimeout(self.clearDataStatusTimer);
+            }
+            self.clearDataStatusTimer = setTimeout(function () {
+                self.data_status("");
+            }, 8000);
+        };
     }
 
     OCTOPRINT_VIEWMODELS.push({
